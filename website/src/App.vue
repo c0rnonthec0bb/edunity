@@ -39,20 +39,13 @@ const { user, loading, signInWithGoogle } = useAuth()
 .page-enter-active {
   transition: all 200ms ease-out;
 }
-.page-leave-active {
-  transition: all 100ms ease-in;
-  position: absolute;
-  width: 100%;
-}
 
-.page-enter-from,
-.page-leave-to {
+.page-enter-from {
   opacity: 0;
   transform: translateY(-10px);
 }
 
-.page-leave-from,
-.page-enter-to {
+.page-leave-from {
   opacity: 1;
 }
 </style>
