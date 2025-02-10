@@ -8,12 +8,17 @@ import SubHeader from '../components/SubHeader.vue'
 import QuizSetup from '../components/QuizSetup.vue'
 import Modal from '../components/Modal.vue'
 import CameraModal from '../components/CameraModal.vue'
-import { useToast } from "primevue/usetoast";
+import { useToast } from 'primevue/usetoast';
+
+import Toast from 'primevue/toast'
+import FileUpload from 'primevue/fileupload'
+import Button from 'primevue/button'
 
 const router = useRouter()
 const route = useRoute()
 const { quizzes, loading, error: quizError, deleteQuiz, updateQuiz } = useQuizzes()
 const { responses, uploadingCount, error: responsesError, uploadResponse } = useQuizResponses(route.params.quizId as string)
+
 const toast = useToast();
 const fileupload = ref();
 
@@ -72,11 +77,6 @@ const onUpload = () => {
 
 <template>
   <div>
-    <div class="card flex flex-col gap-6 items-center justify-center">
-        <Toast />
-        <FileUpload ref="fileupload" mode="basic" name="demo[]" url="/api/upload" accept="image/*" :maxFileSize="1000000" @upload="onUpload" />
-        <Button label="Upload" @click="upload" severity="secondary" />
-    </div>
     <SubHeader 
       :title="quiz?.name || ''"
       super-title="Quiz"
@@ -142,7 +142,13 @@ const onUpload = () => {
 
           <!-- Questions Tab -->
           <div v-else-if="route.name === 'quiz-questions'" class="space-y-6">
+            <div class="card flex flex-col gap-6 items-center justify-center">
+            <Toast />
+            <FileUpload ref="fileupload" mode="basic" name="demo[]" url="/api/upload" accept="image/*,application/pdf" :maxFileSize="1000000" @upload="onUpload" />
+            <Button label="Upload" @click="upload" severity="secondary" />
+            </div>
             <QuizSetup :quiz-id="quiz.id" />
+
           </div>
 
           <!-- Responses Tab -->
