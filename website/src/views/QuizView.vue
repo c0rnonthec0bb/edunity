@@ -8,11 +8,14 @@ import SubHeader from '../components/SubHeader.vue'
 import QuizSetup from '../components/QuizSetup.vue'
 import Modal from '../components/Modal.vue'
 import CameraModal from '../components/CameraModal.vue'
+import { useToast } from "primevue/usetoast";
 
 const router = useRouter()
 const route = useRoute()
 const { quizzes, loading, error: quizError, deleteQuiz, updateQuiz } = useQuizzes()
 const { responses, uploadingCount, error: responsesError, uploadResponse } = useQuizResponses(route.params.quizId as string)
+const toast = useToast();
+const fileupload = ref();
 
 const quiz = computed(() => 
   quizzes.value.find(q => q.id === route.params.quizId)
@@ -57,10 +60,23 @@ const tabs = [
   { label: 'Questions', route: 'quiz-questions' },
   { label: 'Student Responses', route: 'quiz-responses' }
 ]
+
+const upload = () => {
+    fileupload.value.upload();
+};
+
+const onUpload = () => {
+    toast.add({ severity: 'info', summary: 'Success', detail: 'File Uploaded', life: 3000 });
+};
 </script>
 
 <template>
   <div>
+    <div class="card flex flex-col gap-6 items-center justify-center">
+        <Toast />
+        <FileUpload ref="fileupload" mode="basic" name="demo[]" url="/api/upload" accept="image/*" :maxFileSize="1000000" @upload="onUpload" />
+        <Button label="Upload" @click="upload" severity="secondary" />
+    </div>
     <SubHeader 
       :title="quiz?.name || ''"
       super-title="Quiz"
