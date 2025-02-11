@@ -1,18 +1,30 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useQuizzes } from '@/composables/useQuizzes'
-import { useDebounce } from '@/composables/useDebounce'
-import { useQuizResponses } from '@/composables/useQuizResponses'
-import SubHeader from '@/components/SubHeader.vue'
-import QuizSetup from '@/components/QuizSetup.vue'
-import Modal from '@/components/Modal.vue'
-import CameraModal from '@/components/CameraModal.vue'
+import { useQuizzes } from '../composables/useQuizzes'
+import { useDebounce } from '../composables/useDebounce'
+import { useQuizResponses } from '../composables/useQuizResponses'
+import SubHeader from '../components/SubHeader.vue'
+import QuizSetup from '../components/QuizSetup.vue'
+import Modal from '../components/Modal.vue'
+import CameraModal from '../components/CameraModal.vue'
+import { useToast } from 'primevue/usetoast'
+import axios from 'axios'
+
+import Toast from 'primevue/toast'
+import FileUpload from 'primevue/fileupload'
+import Button from 'primevue/button'
 
 const router = useRouter()
 const route = useRoute()
 const { quizzes, loading, error: quizError, deleteQuiz, updateQuiz } = useQuizzes()
 const { responses, uploadingCount, error: responsesError, uploadResponse } = useQuizResponses(route.params.quizId as string)
+
+const toast = useToast();
+const fileupload = ref();
+
+const uploadedText = ref('');  // Store the extracted text from PDF
+const generatedQuestions = ref([]); // Store AI-generated questions
 
 const quiz = computed(() => 
   quizzes.value.find(q => q.id === route.params.quizId)
@@ -57,6 +69,56 @@ const tabs = [
   { label: 'Questions', route: 'quiz-questions' },
   { label: 'Student Responses', route: 'quiz-responses' }
 ]
+
+// Modified upload function to handle PDF and extract text
+const upload = async () => {
+    if (!fileupload.value) {
+        console.error("FileUpload component not found.");
+        return;
+    }
+
+    const file = fileupload.value.files[0]; // Get uploaded file
+    if (!file) {
+        toast.add({ severity: 'error', summary: 'Error', detail: 'No file selected.', life: 3000 });
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+        // Send file to backend for text extraction with pdfplumber
+        const response = await axios.post("http://localhost:5000/upload", formData);
+        uploadedText.value = response.data.text; // Store the extracted text
+
+        // After extracting text, generate questions
+        //generateQuestions();
+
+        toast.add({ severity: 'success', summary: 'Success', detail: 'File uploaded and text extracted!', life: 3000 });
+    } catch (error) {
+        console.error("Upload failed:", error);
+        toast.add({ severity: 'error', summary: 'Upload Failed', detail: 'Could not process file.', life: 3000 });
+    }
+};
+
+/* // Function to generate questions using the extracted text
+const generateQuestions = async () => {
+    try {
+        const response = await axios.post("http://localhost:5000/generate-questions", {
+            text: uploadedText.value
+        });
+        generatedQuestions.value = response.data.questions;
+
+        toast.add({ severity: 'success', summary: 'Success', detail: 'Questions Generated!', life: 3000 });
+    } catch (error) {
+        console.error("OpenAI request failed:", error);
+        toast.add({ severity: 'error', summary: 'AI Error', detail: 'Could not generate questions.', life: 3000 });
+    }
+}; */
+
+const onUpload = () => {
+    toast.add({ severity: 'info', summary: 'Success', detail: 'File Uploaded', life: 3000 });
+};
 </script>
 
 <template>
@@ -88,146 +150,49 @@ const tabs = [
       </div>
 
       <div v-else>
-        <!-- Tabs -->
-        <div class="border-b border-gray-200">
-          <nav class="-mb-px flex gap-6" aria-label="Tabs">
-            <router-link
-              v-for="tab in tabs"
-              :key="tab.route"
-              :to="{ name: tab.route, params: { quizId: quiz.id }}"
-              class="py-4 px-1 border-b-2"
-              :class="[
-                route.name === tab.route
-                  ? 'border-theme-500 text-theme-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              ]"
-            >
-              {{ tab.label }}
-            </router-link>
-          </nav>
+        <!-- Tabs for Navigation -->
+        <div class="flex space-x-4 mb-6">
+          <div 
+            v-for="tab in tabs" 
+            :key="tab.route" 
+            :class="{'text-blue-600 font-semibold': route.name === tab.route, 'text-gray-500': route.name !== tab.route}" 
+            @click="router.push({ name: tab.route })"
+            class="cursor-pointer hover:text-blue-600"
+          >
+            {{ tab.label }}
+          </div>
         </div>
 
         <div class="mt-6">
-          <!-- Overview Tab -->
-          <div v-if="route.name === 'quiz-overview'" class="space-y-6">
-            <div class="bg-white rounded-lg shadow">
-              <div class="p-6">
-                <h3 class="text-lg font-medium text-gray-900 mb-2">Name</h3>
-                <input
-                  v-model="quizName"
-                  type="text"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-theme-500 focus:border-theme-500"
-                  placeholder="Unnamed Quiz"
-                  @change="updateQuiz(quiz.id, { name: quizName })"
-                />
-              </div>
-            </div>
-          </div>
-
           <!-- Questions Tab -->
-          <div v-else-if="route.name === 'quiz-questions'" class="space-y-6">
+          <div v-if="route.name === 'quiz-questions'" class="space-y-6">
+            <div class="card flex flex-col gap-6 items-center justify-center">
+              <Toast />
+              <FileUpload ref="fileupload" mode="basic" name="file" url="/api/upload" accept="application/pdf" 
+                          :maxFileSize="5000000" @upload="upload" />
+              <Button label="Upload and Generate" @click="upload" severity="secondary" />
+            </div>
+
+            <!-- Display Extracted Text -->
+            <div v-if="uploadedText" class="bg-white rounded-lg shadow p-6">
+              <h3 class="text-lg font-medium text-gray-900 mb-2">Extracted Text</h3>
+              <p class="text-gray-600 whitespace-pre-wrap">{{ uploadedText }}</p>
+            </div>
+
+            <!-- Display AI-Generated Questions -->
+            <div v-if="generatedQuestions.length" class="bg-white rounded-lg shadow p-6">
+              <h3 class="text-lg font-medium text-gray-900 mb-2">Generated Questions</h3>
+              <ul>
+                <li v-for="(question, index) in generatedQuestions" :key="index" class="border p-2 mt-2">
+                  {{ question }}
+                </li>
+              </ul>
+            </div>
+
             <QuizSetup :quiz-id="quiz.id" />
-          </div>
-
-          <!-- Responses Tab -->
-          <div v-else-if="route.name === 'quiz-responses'">
-            <!-- Error message -->
-            <div v-if="responsesError" class="text-red-600 mb-4">
-              {{ responsesError }}
-            </div>
-
-            <button
-              @click="showCameraModal = true"
-              class="w-full inline-flex items-center justify-center px-4 py-2.5 bg-theme-500 text-white rounded-lg hover:bg-theme-600 transition-colors gap-2 mb-6 h-10"
-            >
-              <svg
-                class="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                />
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-              {{ responses.length === 0 ? 'Upload Responses' : 'Upload More Responses' }}
-            </button>
-
-            <!-- Uploading banner -->
-            <div 
-              v-if="uploadingCount > 0"
-              class="flex items-center gap-3 bg-theme-50 text-theme-700 px-4 py-3 rounded-lg mb-6"
-            >
-              <svg class="w-5 h-5 animate-spin" viewBox="0 0 24 24">
-                <circle
-                  class="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  stroke-width="4"
-                />
-                <path
-                  class="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-              {{ uploadingCount === 1 ? 'Response uploading...' : `${uploadingCount} responses uploading...` }}
-            </div>
-
-            <div class="space-y-4">
-              <router-link
-                v-for="response in responses"
-                :key="response.id"
-                :to="{ name: 'quiz-response', params: { quizId: route.params.quizId, responseId: response.id }}"
-                class="block bg-white shadow rounded-lg p-4 hover:shadow-md transition-shadow"
-              >
-                <div class="flex items-center justify-between">
-                  <div>
-                    <div class="text-sm text-gray-500">
-                      {{ new Date(response.createdAt.toDate()).toLocaleString() }}
-                    </div>
-                  </div>
-                  <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </router-link>
-            </div>
           </div>
         </div>
       </div>
     </main>
-
-    <!-- Delete Confirmation Modal -->
-    <Modal
-      v-model="showDeleteModal"
-      title="Delete Quiz"
-      confirm-text="Delete Quiz"
-      cancel-text="Cancel"
-      :danger="true"
-      max-width="max-w-md"
-      @confirm="handleDelete"
-    >
-      <p class="text-gray-600">
-        Are you sure you want to delete this quiz? This action cannot be undone.
-      </p>
-    </Modal>
-
-    <!-- Camera Modal -->
-    <CameraModal
-      v-model="showCameraModal"
-      @upload="handlePhotoUpload"
-    />
   </div>
 </template>
