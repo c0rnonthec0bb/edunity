@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useQuizzes } from '../composables/useQuizzes'
-import SubHeader from '../components/SubHeader.vue'
-import Modal from '../components/Modal.vue'
+import { useQuizzes } from '@/composables/useQuizzes'
+import SubHeader from '@/components/SubHeader.vue'
+import Modal from '@/components/Modal.vue'
 
 const router = useRouter()
 const { quizzes, loading, error, addQuiz } = useQuizzes()

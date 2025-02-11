@@ -1,5 +1,5 @@
-import { ref } from 'vue'
-import { auth } from '../firebase'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { auth } from '@/firebase'
 import { 
   GoogleAuthProvider,
   signInWithPopup,

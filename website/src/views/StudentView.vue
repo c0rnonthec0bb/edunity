@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useStudents } from '../composables/useStudents'
-import { useDebounce } from '../composables/useDebounce'
-import SubHeader from '../components/SubHeader.vue'
-import Modal from '../components/Modal.vue'
+import { useStudents } from '@/composables/useStudents'
+import { useDebounce } from '@/composables/useDebounce'
+import SubHeader from '@/components/SubHeader.vue'
+import Modal from '@/components/Modal.vue'
 
 const router = useRouter()
 const route = useRoute()

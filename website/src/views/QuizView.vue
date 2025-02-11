@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useQuizzes } from '../composables/useQuizzes'
-import { useDebounce } from '../composables/useDebounce'
-import { useQuizResponses } from '../composables/useQuizResponses'
-import SubHeader from '../components/SubHeader.vue'
-import QuizSetup from '../components/QuizSetup.vue'
-import Modal from '../components/Modal.vue'
-import CameraModal from '../components/CameraModal.vue'
+import { useQuizzes } from '@/composables/useQuizzes'
+import { useDebounce } from '@/composables/useDebounce'
+import { useQuizResponses } from '@/composables/useQuizResponses'
+import SubHeader from '@/components/SubHeader.vue'
+import QuizSetup from '@/components/QuizSetup.vue'
+import Modal from '@/components/Modal.vue'
+import CameraModal from '@/components/CameraModal.vue'
 
 const router = useRouter()
 const route = useRoute()

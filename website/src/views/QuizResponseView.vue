@@ -57,10 +57,10 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getDownloadURL, ref as storageRef } from 'firebase/storage'
-import { storage } from '../firebase'
-import { useQuizResponses } from '../composables/useQuizResponses'
-import Modal from '../components/Modal.vue'
-import SubHeader from '../components/SubHeader.vue'
+import { storage } from '@/firebase'
+import { useQuizResponses } from '@/composables/useQuizResponses'
+import Modal from '@/components/Modal.vue'
+import SubHeader from '@/components/SubHeader.vue'
 
 const route = useRoute()
 const router = useRouter()

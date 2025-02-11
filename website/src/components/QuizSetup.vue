@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useQuizzes, type QuizQuestion } from '../composables/useQuizzes'
+import { useQuizzes, type QuizQuestion } from '@/composables/useQuizzes'
 import { nanoid } from 'nanoid'
 import draggable from 'vuedraggable'
 import Modal from './Modal.vue'

@@ -1,11 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import StudentsView from '../views/StudentsView.vue'
-import StudentView from '../views/StudentView.vue'
-import QuizzesView from '../views/QuizzesView.vue'
-import QuizView from '../views/QuizView.vue'
-import QuizResponseView from '../views/QuizResponseView.vue'
-import SettingsView from '../views/SettingsView.vue'
+import HomeView from '@/views/HomeView.vue'
+import StudentsView from '@/views/StudentsView.vue'
+import StudentView from '@/views/StudentView.vue'
+import QuizzesView from '@/views/QuizzesView.vue'
+import QuizView from '@/views/QuizView.vue'
+import QuizResponseView from '@/views/QuizResponseView.vue'
+import SettingsView from '@/views/SettingsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),

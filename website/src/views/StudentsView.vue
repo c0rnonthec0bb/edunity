@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useStudents } from '../composables/useStudents'
-import SubHeader from '../components/SubHeader.vue'
-import Modal from '../components/Modal.vue'
+import { useStudents } from '@/composables/useStudents'
+import SubHeader from '@/components/SubHeader.vue'
+import Modal from '@/components/Modal.vue'
 
 const router = useRouter()
 const { students, loading, error, addStudent } = useStudents()

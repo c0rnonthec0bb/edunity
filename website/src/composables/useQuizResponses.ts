@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 import { collection, doc, addDoc, onSnapshot, query, orderBy, getDoc, deleteDoc } from 'firebase/firestore'
 import { ref as storageRef, uploadBytes, deleteObject } from 'firebase/storage'
-import { db, storage } from '../firebase'
+import { db, storage } from '@/firebase'
 import type { Timestamp } from 'firebase/firestore'
 import { nanoid } from 'nanoid'
 

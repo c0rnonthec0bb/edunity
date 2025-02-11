@@ -1,7 +1,7 @@
-import { ref, onUnmounted } from 'vue'
-import { collection, query, onSnapshot, addDoc, deleteDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
-import { db } from '../firebase'
-import { useAuth } from './useAuth'
+import { ref, onUnmounted, watch } from 'vue'
+import { collection, query, onSnapshot, addDoc, deleteDoc, doc, updateDoc, serverTimestamp, where } from 'firebase/firestore'
+import { db } from '@/firebase'
+import { useAuth } from '@/composables/useAuth'
 
 export interface QuizQuestion {
   id: string
@@ -25,26 +25,50 @@ export function useQuizzes() {
   const loading = ref(true)
   const error = ref<string | null>(null)
 
-  // Subscribe to quizzes collection
-  const unsubscribe = onSnapshot(
-    query(collection(db, 'quizzes')),
-    (snapshot) => {
-      quizzes.value = snapshot.docs.map(doc => ({
-        id: doc.id,
-        name: doc.data().name,
-        educatorUserId: doc.data().educatorUserId,
-        questions: doc.data().questions || [],
-        createdAt: doc.data().createdAt?.toDate() || new Date(),
-        updatedAt: doc.data().updatedAt?.toDate() || new Date()
-      }))
-      loading.value = false
-    },
-    (err) => {
-      console.error('Error fetching quizzes:', err)
-      error.value = 'Failed to load quizzes'
-      loading.value = false
+  // Store the unsubscribe function
+  let unsubscribe: (() => void) | null = null
+
+  // Setup Firestore listener whenever the user changes
+  watch(() => user.value?.uid, (userId) => {
+    // Clean up previous listener if it exists
+    if (unsubscribe) {
+      unsubscribe()
+      unsubscribe = null
     }
-  )
+
+    if (!userId) {
+      quizzes.value = []
+      loading.value = false
+      return
+    }
+
+    loading.value = true
+    error.value = null
+
+    // Subscribe to quizzes collection
+    unsubscribe = onSnapshot(
+      query(
+        collection(db, 'quizzes'),
+        where('educatorUserId', '==', userId)
+      ),
+      (snapshot) => {
+        quizzes.value = snapshot.docs.map(doc => ({
+          id: doc.id,
+          name: doc.data().name,
+          educatorUserId: doc.data().educatorUserId,
+          questions: doc.data().questions || [],
+          createdAt: doc.data().createdAt?.toDate() || new Date(),
+          updatedAt: doc.data().updatedAt?.toDate() || new Date()
+        }))
+        loading.value = false
+      },
+      (err) => {
+        console.error('Error fetching quizzes:', err)
+        error.value = 'Failed to load quizzes'
+        loading.value = false
+      }
+    )
+  }, { immediate: true })
 
   // Add new quiz
   const addQuiz = async (name: string) => {
@@ -114,7 +138,9 @@ export function useQuizzes() {
 
   // Cleanup subscription on unmount
   onUnmounted(() => {
-    unsubscribe()
+    if (unsubscribe) {
+      unsubscribe()
+    }
   })
 
   return {

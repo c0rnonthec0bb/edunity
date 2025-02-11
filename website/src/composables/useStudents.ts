@@ -1,7 +1,7 @@
 import { ref, watch, onUnmounted } from 'vue'
 import { collection, query, where, addDoc, onSnapshot, deleteDoc, doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
-import { db } from '../firebase'
-import { useAuth } from './useAuth'
+import { db } from '@/firebase'
+import { useAuth } from '@/composables/useAuth'
 
 export interface Student extends DocumentData {
   id: string
