@@ -40,13 +40,12 @@
     <Modal
       v-model="confirmDelete"
       title="Delete Response"
-      max-width="max-w-md"
-      cancel-text="Cancel"
-      confirm-text="Delete"
-      :danger="true"
-      @confirm="handleDelete"
+      :actions="[
+        { label: 'Cancel', onClick: () => confirmDelete = false },
+        { label: 'Delete', onClick: handleDelete, variant: 'danger' }
+      ]"
     >
-      <p class="text-sm text-gray-500">
+      <p class="text-gray-700">
         Are you sure you want to delete this response? This action cannot be undone.
       </p>
     </Modal>
@@ -56,32 +55,36 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getDownloadURL, ref as storageRef } from 'firebase/storage'
-import { storage } from '@/firebase'
 import { useQuizResponses } from '@/composables/useQuizResponses'
 import Modal from '@/components/Modal.vue'
 import SubHeader from '@/components/SubHeader.vue'
+import { storage } from '@/firebase'
+import { getDownloadURL, ref as storageRef } from 'firebase/storage'
 
 const route = useRoute()
 const router = useRouter()
-const confirmDelete = ref(false)
-const photoUrl = ref<string | null>(null)
+const quizId = route.params.quizId as string
+const responseId = route.params.responseId as string
+const { getQuizResponse, deleteQuizResponse } = useQuizResponses()
 
-const { deleteResponse, getResponse } = useQuizResponses(route.params.quizId as string)
+const response = ref(null)
+const photoUrl = ref('')
+const confirmDelete = ref(false)
 
 onMounted(async () => {
-  const response = await getResponse(route.params.responseId as string)
-  if (response?.photoCapturePath) {
-    const photoRef = storageRef(storage, response.photoCapturePath)
+  response.value = await getQuizResponse(quizId, responseId)
+  if (response.value?.photoCapturePath) {
+    const photoRef = storageRef(storage, response.value.photoCapturePath)
     photoUrl.value = await getDownloadURL(photoRef)
   }
 })
 
 const handleDelete = async () => {
-  await deleteResponse(route.params.responseId as string)
-  router.push({ 
-    name: 'quiz-responses', 
-    params: { quizId: route.params.quizId }
-  })
+  try {
+    await deleteQuizResponse(quizId, responseId)
+    router.push({ name: 'quiz-responses', params: { quizId } })
+  } catch (err) {
+    console.error('Failed to delete response:', err)
+  }
 }
 </script>

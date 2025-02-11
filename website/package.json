@@ -10,6 +10,7 @@
     "lint": "eslint . --fix"
   },
   "dependencies": {
+    "@acobb/firepower": "^1.2.0",
     "@headlessui/vue": "^1.7.23",
     "@primevue/themes": "^4.2.5",
     "@vueuse/core": "^12.5.0",

@@ -1,26 +1,20 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { auth } from '@/firebase'
-import { 
-  GoogleAuthProvider,
-  signInWithPopup,
-  signOut as firebaseSignOut,
-  onAuthStateChanged,
-  type User
-} from 'firebase/auth'
+import type { User } from 'firebase/compat/auth'
 
 const user = ref<User | null>(null)
 const loading = ref(true)
 
 export function useAuth() {
-  onAuthStateChanged(auth, (newUser) => {
+  auth.onAuthStateChanged((newUser) => {
     user.value = newUser
     loading.value = false
   })
 
   const signInWithGoogle = async () => {
     try {
-      const provider = new GoogleAuthProvider()
-      await signInWithPopup(auth, provider)
+      const provider = new auth.GoogleAuthProvider()
+      await auth.signInWithPopup(provider)
     } catch (error) {
       console.error('Error signing in with Google:', error)
     }
@@ -28,7 +22,7 @@ export function useAuth() {
 
   const signOut = async () => {
     try {
-      await firebaseSignOut(auth)
+      await auth.signOut()
     } catch (error) {
       console.error('Error signing out:', error)
     }

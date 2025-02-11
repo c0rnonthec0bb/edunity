@@ -4,6 +4,9 @@ import StudentsView from '@/views/StudentsView.vue'
 import StudentView from '@/views/StudentView.vue'
 import QuizzesView from '@/views/QuizzesView.vue'
 import QuizView from '@/views/QuizView.vue'
+import QuizOverviewView from '@/views/QuizOverviewView.vue'
+import QuizQuestionsView from '@/views/QuizQuestionsView.vue'
+import QuizResponsesView from '@/views/QuizResponsesView.vue'
 import QuizResponseView from '@/views/QuizResponseView.vue'
 import SettingsView from '@/views/SettingsView.vue'
 
@@ -44,17 +47,17 @@ const router = createRouter({
         { 
           path: 'overview', 
           name: 'quiz-overview',
-          component: QuizView,
+          component: QuizOverviewView,
         },
         { 
           path: 'questions', 
           name: 'quiz-questions',
-          component: QuizView,
+          component: QuizQuestionsView,
         },
         { 
           path: 'responses', 
           name: 'quiz-responses',
-          component: QuizView,
+          component: QuizResponsesView,
         }
       ]
     },

@@ -11,21 +11,22 @@ const route = useRoute()
 const { students, loading, error, deleteStudent, updateStudent } = useStudents()
 
 const showDeleteModal = ref(false)
-const student = computed(() => students.value.find(s => s.id === route.params.studentId))
+const studentId = route.params.studentId as string
+const student = computed(() => students.value.find(s => s.id === studentId))
 
-// Set up debounced values for inline editing
-const studentName = ref(student.value?.name || '')
-const studentNotes = ref(student.value?.notes || '')
-const debouncedName = useDebounce(studentName, 500)
-const debouncedNotes = useDebounce(studentNotes, 500)
-
-// Watch for student changes to update local values
-watch(() => student.value?.name, (newName) => {
-  if (newName && newName !== studentName.value) {
-    studentName.value = newName
+const studentName = computed({
+  get: () => student.value?.name || '',
+  set: (newName) => {
+    if (student.value) {
+      updateStudent(studentId, { name: newName })
+    }
   }
 })
 
+const studentNotes = ref(student.value?.notes || '')
+const debouncedNotes = useDebounce(studentNotes, 500)
+
+// Watch for student changes to update local values
 watch(() => student.value?.notes, (newNotes) => {
   if (newNotes !== studentNotes.value) {
     studentNotes.value = newNotes || ''
@@ -33,14 +34,6 @@ watch(() => student.value?.notes, (newNotes) => {
 })
 
 // Watch for debounced changes to update server
-watch(debouncedName, async (newName) => {
-  if (student.value && newName !== student.value.name) {
-    await updateStudent(student.value.id, {
-      name: newName
-    })
-  }
-})
-
 watch(debouncedNotes, async (newNotes) => {
   if (student.value && newNotes !== student.value.notes) {
     await updateStudent(student.value.id, {
@@ -105,8 +98,8 @@ const handleDelete = async () => {
             <input
               v-model="studentName"
               type="text"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-theme-500 focus:border-theme-500"
-              :placeholder="'Unnamed Student'"
+              placeholder="Student Name"
+              class="w-full px-4 py-2 text-xl font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-theme-500 focus:border-transparent"
             />
           </div>
           
@@ -115,10 +108,9 @@ const handleDelete = async () => {
             <h3 class="text-lg font-medium text-gray-900 mb-2">Notes</h3>
             <textarea
               v-model="studentNotes"
-              rows="4"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-theme-500 focus:border-theme-500 resize-y"
-              placeholder="Add notes about this student"
-            ></textarea>
+              placeholder="Add notes about this student..."
+              class="w-full px-4 py-2 text-base text-gray-900 bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-theme-500 focus:border-transparent min-h-[100px] resize-y"
+            />
           </div>
         </div>
       </div>
@@ -128,13 +120,12 @@ const handleDelete = async () => {
     <Modal
       v-model="showDeleteModal"
       title="Delete Student"
-      confirm-text="Delete Student"
-      cancel-text="Cancel"
-      :danger="true"
-      max-width="max-w-md"
-      @confirm="handleDelete"
+      :actions="[
+        { label: 'Cancel', onClick: () => showDeleteModal = false },
+        { label: 'Delete', onClick: handleDelete, variant: 'danger' }
+      ]"
     >
-      <p class="text-gray-600">
+      <p class="text-gray-700">
         Are you sure you want to delete this student? This action cannot be undone.
       </p>
     </Modal>

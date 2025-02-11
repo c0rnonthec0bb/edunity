@@ -1,7 +1,8 @@
-import { ref, watch, onUnmounted } from 'vue'
-import { collection, query, where, addDoc, onSnapshot, deleteDoc, doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
-import { db } from '@/firebase'
+import { ref, watch, onUnmounted, computed } from 'vue'
+import type { DocumentData } from 'firebase/firestore'
+import { firestore } from '@/firebase'
 import { useAuth } from '@/composables/useAuth'
+import { STUDENTS_COL_PATH, STUDENT_DOC_PATH } from '../../../shared/paths'
 
 export interface Student extends DocumentData {
   id: string
@@ -37,23 +38,18 @@ export function useStudents() {
     loading.value = true
     error.value = null
 
-    // Set up real-time listener
-    const q = query(
-      collection(db, 'students'),
-      where('educatorUserId', '==', userId)
-    )
-    
-    unsubscribe = onSnapshot(q, 
-      (snapshot) => {
+    // Set up real-time listener using Firepower
+    unsubscribe = firestore.watchCol(
+      STUDENTS_COL_PATH,
+      [q => q.where('educatorUserId', '==', userId)],
+      snapshot => {
         students.value = snapshot.docs.map(doc => ({
           id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate() || new Date(),
-          updatedAt: doc.data().updatedAt?.toDate() || new Date()
+          ...doc.data
         })) as Student[]
         loading.value = false
       },
-      (err) => {
+      err => {
         console.error('Error fetching students:', err)
         error.value = 'Failed to load students'
         loading.value = false
@@ -74,12 +70,12 @@ export function useStudents() {
     error.value = null
 
     try {
-      await addDoc(collection(db, 'students'), {
+      await firestore.addDoc(STUDENTS_COL_PATH, {
         name,
         educatorUserId: user.value.uid,
         notes: '',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        createdAt: firestore.serverTimestamp(),
+        updatedAt: firestore.serverTimestamp()
       })
     } catch (e) {
       console.error('Error adding student:', e)
@@ -92,16 +88,12 @@ export function useStudents() {
     error.value = null
 
     try {
-      const docRef = doc(db, 'students', studentId)
-      const docSnap = await getDoc(docRef)
-      
-      if (docSnap.exists()) {
-        const data = docSnap.data()
+      const doc = await firestore.getDoc(STUDENT_DOC_PATH(studentId))
+      if (doc.exists) {
+        const data = doc.data
         return {
-          id: docSnap.id,
-          ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date()
+          id: doc.id,
+          ...data
         } as Student
       }
       return null
@@ -120,10 +112,9 @@ export function useStudents() {
     error.value = null
 
     try {
-      const docRef = doc(db, 'students', id)
-      await updateDoc(docRef, {
+      await firestore.updateDoc(STUDENT_DOC_PATH(id), {
         ...data,
-        updatedAt: serverTimestamp()
+        updatedAt: firestore.serverTimestamp()
       })
     } catch (err) {
       console.error('Error updating student:', err)
@@ -137,8 +128,7 @@ export function useStudents() {
     error.value = null
 
     try {
-      const docRef = doc(db, 'students', studentId)
-      await deleteDoc(docRef)
+      await firestore.deleteDoc(STUDENT_DOC_PATH(studentId))
       return true
     } catch (e) {
       console.error('Error deleting student:', e)

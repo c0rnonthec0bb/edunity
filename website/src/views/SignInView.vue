@@ -5,7 +5,7 @@
         Edunity.ai
       </h1>
       <button
-        @click="signIn"
+        @click="signInWithGoogle"
         class="inline-flex items-center px-6 py-3 bg-white text-gray-900 rounded-lg shadow hover:shadow-md transition-shadow gap-3 font-medium"
       >
         <svg class="w-5 h-5" viewBox="0 0 24 24">
@@ -22,12 +22,4 @@
 
 <script setup lang="ts">
 import { signInWithGoogle } from '@/firebase'
-
-const signIn = async () => {
-  try {
-    await signInWithGoogle()
-  } catch (error) {
-    console.error('Error signing in:', error)
-  }
-}
 </script>

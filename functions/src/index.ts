@@ -1,19 +1,32 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * import {onCall} from "firebase-functions/v2/https";
- * import {onDocumentWritten} from "firebase-functions/v2/firestore";
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
+import './firebase'
 
-import {onRequest} from "firebase-functions/v2/https";
-import * as logger from "firebase-functions/logger";
+import { functions, firestore } from './firebase'
+import { QUIZ_RESPONSE_DOC_PATH } from '../../shared/paths'
+import { describeImage } from './genkit'
 
-// Start writing functions
-// https://firebase.google.com/docs/functions/typescript
+export const onQuizResponseUpdated = functions.onDocUpdated(QUIZ_RESPONSE_DOC_PATH('{quizId}', '{responseId}'), async ({ docChange, path }) => {
+    const updates = {}
+    const promiseFunctions = []
 
-// export const helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+    const photoCapturePathChange = docChange.transform(({ photoCapturePath }) => photoCapturePath)
+    if (photoCapturePathChange.isUnequal) {
+        updates.photoCaptureDescription = firestore.cloudDelete()
+
+        if (photoCapturePathChange.newValue) {
+            promiseFunctions.push(
+                async () => {
+                    // Call GenKit to analyze the image
+                    const photoCaptureDescription = await describeImage({
+                        storagePath: photoCapturePathChange.newValue,
+                        prompt: 'Please describe what you see in this image, focusing on any text or mathematical content visible.'
+                    })
+
+                    // Update the document with the AI description
+                    await firestore.updateDoc(path, { photoCaptureDescription })
+                },
+            )
+        }
+    }
+
+    return { updates, promiseFunctions }
+})

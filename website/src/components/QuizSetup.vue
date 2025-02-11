@@ -201,26 +201,26 @@ const handleEditQuestion = async () => {
           <label for="question" class="block text-sm font-medium text-gray-700 mb-1">
             Question
           </label>
-          <textarea
+          <input
             id="question"
             v-model="newQuestion"
-            rows="3"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-theme-500 focus:border-theme-500 resize-y"
-            placeholder="Enter your question"
-          ></textarea>
+            type="text"
+            placeholder="Enter question"
+            class="w-full px-4 py-2 text-base text-gray-900 bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-theme-500 focus:border-transparent"
+          />
         </div>
 
         <div>
           <label for="answer" class="block text-sm font-medium text-gray-700 mb-1">
             Answer
           </label>
-          <textarea
+          <input
             id="answer"
             v-model="newAnswer"
-            rows="3"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-theme-500 focus:border-theme-500 resize-y"
-            placeholder="Enter the answer"
-          ></textarea>
+            type="text"
+            placeholder="Enter answer"
+            class="w-full px-4 py-2 text-base text-gray-900 bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-theme-500 focus:border-transparent"
+          />
         </div>
       </div>
     </Modal>
@@ -236,29 +236,29 @@ const handleEditQuestion = async () => {
     >
       <div class="space-y-4">
         <div>
-          <label for="editQuestion" class="block text-sm font-medium text-gray-700 mb-1">
+          <label for="edit-question" class="block text-sm font-medium text-gray-700 mb-1">
             Question
           </label>
-          <textarea
-            id="editQuestion"
+          <input
+            id="edit-question"
             v-model="editedQuestion"
-            rows="3"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-theme-500 focus:border-theme-500 resize-y"
-            placeholder="Enter your question"
-          ></textarea>
+            type="text"
+            placeholder="Enter question"
+            class="w-full px-4 py-2 text-base text-gray-900 bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-theme-500 focus:border-transparent"
+          />
         </div>
 
         <div>
-          <label for="editAnswer" class="block text-sm font-medium text-gray-700 mb-1">
+          <label for="edit-answer" class="block text-sm font-medium text-gray-700 mb-1">
             Answer
           </label>
-          <textarea
-            id="editAnswer"
+          <input
+            id="edit-answer"
             v-model="editedAnswer"
-            rows="3"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-theme-500 focus:border-theme-500 resize-y"
-            placeholder="Enter the answer"
-          ></textarea>
+            type="text"
+            placeholder="Enter answer"
+            class="w-full px-4 py-2 text-base text-gray-900 bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-theme-500 focus:border-transparent"
+          />
         </div>
       </div>
     </Modal>
@@ -267,13 +267,12 @@ const handleEditQuestion = async () => {
     <Modal
       v-model="showDeleteModal"
       title="Delete Question"
-      confirm-text="Delete Question"
-      cancel-text="Cancel"
-      :danger="true"
-      max-width="max-w-md"
-      @confirm="handleDeleteQuestion"
+      :actions="[
+        { label: 'Cancel', onClick: () => showDeleteModal = false },
+        { label: 'Delete', onClick: handleDeleteQuestion, variant: 'danger' }
+      ]"
     >
-      <p class="text-gray-600">
+      <p class="text-gray-700">
         Are you sure you want to delete this question? This action cannot be undone.
       </p>
     </Modal>

@@ -1,30 +1,26 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useQuizzes } from '../composables/useQuizzes'
-import { useDebounce } from '../composables/useDebounce'
-import { useQuizResponses } from '../composables/useQuizResponses'
-import SubHeader from '../components/SubHeader.vue'
-import QuizSetup from '../components/QuizSetup.vue'
-import Modal from '../components/Modal.vue'
-import CameraModal from '../components/CameraModal.vue'
+import { useQuizzes } from '@/composables/useQuizzes'
+import { useDebounce } from '@/composables/useDebounce'
+import { useQuizResponses } from '@/composables/useQuizResponses'
+import SubHeader from '@/components/SubHeader.vue'
+import QuizSetup from '@/components/QuizSetup.vue'
+import Modal from '@/components/Modal.vue'
 import { useToast } from 'primevue/usetoast'
-import axios from 'axios'
-
 import Toast from 'primevue/toast'
-import FileUpload from 'primevue/fileupload'
 import Button from 'primevue/button'
 
 const router = useRouter()
 const route = useRoute()
 const { quizzes, loading, error: quizError, deleteQuiz, updateQuiz } = useQuizzes()
-const { responses, uploadingCount, error: responsesError, uploadResponse } = useQuizResponses(route.params.quizId as string)
+const { responses, error: responsesError } = useQuizResponses({ 
+  quizId: route.params.quizId as string 
+})
 
-const toast = useToast();
-const fileupload = ref();
-
-const uploadedText = ref('');  // Store the extracted text from PDF
-const generatedQuestions = ref([]); // Store AI-generated questions
+const toast = useToast()
+const showDeleteModal = ref(false)
+const showUploadModal = ref(false)
 
 const quiz = computed(() => 
   quizzes.value.find(q => q.id === route.params.quizId)
@@ -47,21 +43,9 @@ watch(debouncedName, async (newName) => {
   }
 })
 
-const showDeleteModal = ref(false)
-const showCameraModal = ref(false)
-
 const handleDelete = async () => {
-  if (!quiz.value) return
-  await deleteQuiz(quiz.value.id)
-  router.push({ name: 'home' })
-}
-
-const handlePhotoUpload = async (photo: Blob) => {
-  try {
-    await uploadResponse(photo)
-  } catch (err) {
-    console.error('Failed to upload photo:', err)
-  }
+  await deleteQuiz(route.params.quizId as string)
+  router.push({ name: 'quizzes' })
 }
 
 const tabs = [
@@ -69,60 +53,11 @@ const tabs = [
   { label: 'Questions', route: 'quiz-questions' },
   { label: 'Student Responses', route: 'quiz-responses' }
 ]
-
-// Modified upload function to handle PDF and extract text
-const upload = async () => {
-    if (!fileupload.value) {
-        console.error("FileUpload component not found.");
-        return;
-    }
-
-    const file = fileupload.value.files[0]; // Get uploaded file
-    if (!file) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'No file selected.', life: 3000 });
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-        // Send file to backend for text extraction with pdfplumber
-        const response = await axios.post("http://localhost:5000/upload", formData);
-        uploadedText.value = response.data.text; // Store the extracted text
-
-        // After extracting text, generate questions
-        //generateQuestions();
-
-        toast.add({ severity: 'success', summary: 'Success', detail: 'File uploaded and text extracted!', life: 3000 });
-    } catch (error) {
-        console.error("Upload failed:", error);
-        toast.add({ severity: 'error', summary: 'Upload Failed', detail: 'Could not process file.', life: 3000 });
-    }
-};
-
-/* // Function to generate questions using the extracted text
-const generateQuestions = async () => {
-    try {
-        const response = await axios.post("http://localhost:5000/generate-questions", {
-            text: uploadedText.value
-        });
-        generatedQuestions.value = response.data.questions;
-
-        toast.add({ severity: 'success', summary: 'Success', detail: 'Questions Generated!', life: 3000 });
-    } catch (error) {
-        console.error("OpenAI request failed:", error);
-        toast.add({ severity: 'error', summary: 'AI Error', detail: 'Could not generate questions.', life: 3000 });
-    }
-}; */
-
-const onUpload = () => {
-    toast.add({ severity: 'info', summary: 'Success', detail: 'File Uploaded', life: 3000 });
-};
 </script>
 
 <template>
   <div>
+    <Toast />
     <SubHeader 
       :title="quiz?.name || ''"
       super-title="Quiz"
@@ -138,61 +73,40 @@ const onUpload = () => {
           </svg>
         </button>
       </template>
-    </SubHeader>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div v-if="quizError" class="text-red-600 mb-4">
-        {{ quizError }}
-      </div>
-
-      <div v-else-if="!quiz" class="text-gray-500">
-        Loading...
-      </div>
-
-      <div v-else>
-        <!-- Tabs for Navigation -->
-        <div class="flex space-x-4 mb-6">
+      <template #tabs>
+        <div class="flex space-x-4 whitespace-nowrap">
           <div 
             v-for="tab in tabs" 
             :key="tab.route" 
-            :class="{'text-blue-600 font-semibold': route.name === tab.route, 'text-gray-500': route.name !== tab.route}" 
-            @click="router.push({ name: tab.route })"
-            class="cursor-pointer hover:text-blue-600"
+            :class="{
+              'bg-theme-100 text-theme-900 border-theme-200': route.name === tab.route,
+              'bg-gray-50 text-gray-600 hover:bg-gray-100 border-gray-200': route.name !== tab.route
+            }" 
+            @click="router.push({ name: tab.route, params: { quizId: route.params.quizId }})"
+            class="px-4 py-2 rounded-lg cursor-pointer font-medium transition-colors duration-200 flex-shrink-0 border"
           >
             {{ tab.label }}
           </div>
         </div>
+      </template>
+    </SubHeader>
 
-        <div class="mt-6">
-          <!-- Questions Tab -->
-          <div v-if="route.name === 'quiz-questions'" class="space-y-6">
-            <div class="card flex flex-col gap-6 items-center justify-center">
-              <Toast />
-              <FileUpload ref="fileupload" mode="basic" name="file" url="/api/upload" accept="application/pdf" 
-                          :maxFileSize="5000000" @upload="upload" />
-              <Button label="Upload and Generate" @click="upload" severity="secondary" />
-            </div>
-
-            <!-- Display Extracted Text -->
-            <div v-if="uploadedText" class="bg-white rounded-lg shadow p-6">
-              <h3 class="text-lg font-medium text-gray-900 mb-2">Extracted Text</h3>
-              <p class="text-gray-600 whitespace-pre-wrap">{{ uploadedText }}</p>
-            </div>
-
-            <!-- Display AI-Generated Questions -->
-            <div v-if="generatedQuestions.length" class="bg-white rounded-lg shadow p-6">
-              <h3 class="text-lg font-medium text-gray-900 mb-2">Generated Questions</h3>
-              <ul>
-                <li v-for="(question, index) in generatedQuestions" :key="index" class="border p-2 mt-2">
-                  {{ question }}
-                </li>
-              </ul>
-            </div>
-
-            <QuizSetup :quiz-id="quiz.id" />
-          </div>
-        </div>
-      </div>
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <router-view></router-view>
     </main>
+
+    <Modal
+      v-model="showDeleteModal"
+      title="Delete Quiz"
+      :actions="[
+        { label: 'Cancel', onClick: () => showDeleteModal = false },
+        { label: 'Delete', onClick: handleDelete, variant: 'danger' }
+      ]"
+    >
+      <p class="text-gray-700">
+        Are you sure you want to delete this quiz? This action cannot be undone.
+      </p>
+    </Modal>
   </div>
 </template>

@@ -27,7 +27,7 @@
             <DialogPanel
               :class="[
                 'w-full transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all',
-                maxWidth
+                maxWidth || 'max-w-lg'
               ]"
             >
               <div class="relative">
@@ -68,25 +68,23 @@
                 <!-- Footer -->
                 <div class="px-6 py-4 bg-gray-50 rounded-b-lg flex justify-end gap-3">
                   <slot name="footer">
-                    <button
-                      v-if="cancelText"
-                      @click="$emit('update:modelValue', false)"
-                      class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-theme-500"
-                    >
-                      {{ cancelText }}
-                    </button>
-                    <button
-                      v-if="confirmText"
-                      @click="$emit('confirm')"
-                      :class="[
-                        'px-4 py-2 text-sm font-medium text-white border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2',
-                        danger 
-                          ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500 border-transparent'
-                          : 'bg-theme-500 hover:bg-theme-600 focus:ring-theme-500 border-transparent'
-                      ]"
-                    >
-                      {{ confirmText }}
-                    </button>
+                    <template v-if="actions">
+                      <button
+                        v-for="action in actions"
+                        :key="action.label"
+                        @click="action.onClick"
+                        :class="[
+                          'px-4 py-2 text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2',
+                          action.variant === 'danger'
+                            ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500 border-transparent text-white'
+                            : action.variant === 'primary'
+                              ? 'bg-theme-500 hover:bg-theme-600 focus:ring-theme-500 border-transparent text-white'
+                              : 'bg-white hover:bg-gray-50 focus:ring-theme-500 border border-gray-300 text-gray-700'
+                        ]"
+                      >
+                        {{ action.label }}
+                      </button>
+                    </template>
                   </slot>
                 </div>
               </div>
@@ -101,17 +99,22 @@
 <script setup lang="ts">
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 
-defineProps<{
+interface ModalAction {
+  label: string
+  onClick: () => void
+  variant?: 'primary' | 'danger' | 'default'
+}
+
+const props = withDefaults(defineProps<{
   modelValue: boolean
   title?: string
   maxWidth?: string
-  cancelText?: string
-  confirmText?: string
-  danger?: boolean
-}>()
+  actions?: ModalAction[]
+}>(), {
+  maxWidth: 'max-w-lg'
+})
 
 defineEmits<{
   (e: 'update:modelValue', value: boolean): void
-  (e: 'confirm'): void
 }>()
 </script>

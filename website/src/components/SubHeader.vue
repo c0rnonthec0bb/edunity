@@ -19,8 +19,8 @@ const backRoute = route.meta.backRoute || { name: 'home' }
 
 <template>
   <header class="bg-white shadow">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-      <div class="flex items-center justify-between">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4">
         <div class="flex items-center min-w-0">
           <router-link
             :to="backRoute"
@@ -48,6 +48,15 @@ const backRoute = route.meta.backRoute || { name: 'home' }
 
         <div>
           <slot name="action" />
+        </div>
+      </div>
+
+      <!-- Tabs slot -->
+      <div v-if="$slots.tabs" class="mt-1 pb-4 overflow-x-auto">
+        <div class="max-w-7xl mx-auto">
+          <div class="px-4 sm:px-6 lg:px-8 inline-block min-w-full">
+            <slot name="tabs" />
+          </div>
         </div>
       </div>
     </div>
