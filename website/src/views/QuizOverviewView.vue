@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useQuizzes } from '@/composables/useQuizzes'
 import { useDebounce } from '@/composables/useDebounce'
+import TextInput from '@/components/TextInput.vue'
 
 const route = useRoute()
 const quizId = route.params.quizId as string
@@ -27,11 +28,10 @@ watch(debouncedName, async (newName) => {
 
 <template>
   <div class="space-y-6">
-    <input
+    <TextInput
       v-model="quizName"
-      type="text"
       placeholder="Quiz Name"
-      class="w-full px-4 py-2 text-xl font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-theme-500 focus:border-transparent"
+      class="text-xl font-medium"
     />
   </div>
 </template>

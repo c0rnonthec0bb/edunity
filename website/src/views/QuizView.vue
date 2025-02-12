@@ -4,9 +4,11 @@ import { useRouter, useRoute } from 'vue-router'
 import { useQuizzes } from '@/composables/useQuizzes'
 import { useDebounce } from '@/composables/useDebounce'
 import { useQuizResponses } from '@/composables/useQuizResponses'
+import { usePageTitle } from '@/composables/usePageTitle'
 import SubHeader from '@/components/SubHeader.vue'
 import QuizSetup from '@/components/QuizSetup.vue'
 import Modal from '@/components/Modal.vue'
+import TabList from '@/components/TabList.vue'
 import { useToast } from 'primevue/usetoast'
 import Toast from 'primevue/toast'
 import Button from 'primevue/button'
@@ -17,6 +19,7 @@ const { quizzes, loading, error: quizError, deleteQuiz, updateQuiz } = useQuizze
 const { responses, error: responsesError } = useQuizResponses({ 
   quizId: route.params.quizId as string 
 })
+const { updateTitle } = usePageTitle()
 
 const toast = useToast()
 const showDeleteModal = ref(false)
@@ -29,9 +32,11 @@ const quiz = computed(() =>
 const quizName = ref(quiz.value?.name || '')
 const debouncedName = useDebounce(quizName, 500)
 
+// Watch for quiz changes to update local values and title
 watch(() => quiz.value?.name, (newName) => {
-  if (newName && newName !== quizName.value) {
-    quizName.value = newName
+  if (newName !== quizName.value) {
+    quizName.value = newName || ''
+    updateTitle(newName)
   }
 })
 
@@ -49,10 +54,15 @@ const handleDelete = async () => {
 }
 
 const tabs = [
-  { label: 'Overview', route: 'quiz-overview' },
-  { label: 'Questions', route: 'quiz-questions' },
-  { label: 'Student Responses', route: 'quiz-responses' }
+  { label: 'Overview', value: 'quiz-overview' },
+  { label: 'Questions', value: 'quiz-questions' },
+  { label: 'Student Responses', value: 'quiz-responses' }
 ]
+
+const selectedTab = computed({
+  get: () => route.name as string,
+  set: (value) => router.push({ name: value, params: { quizId: route.params.quizId }})
+})
 </script>
 
 <template>
@@ -75,20 +85,10 @@ const tabs = [
       </template>
 
       <template #tabs>
-        <div class="flex space-x-4 whitespace-nowrap">
-          <div 
-            v-for="tab in tabs" 
-            :key="tab.route" 
-            :class="{
-              'bg-theme-100 text-theme-900 border-theme-200': route.name === tab.route,
-              'bg-gray-50 text-gray-600 hover:bg-gray-100 border-gray-200': route.name !== tab.route
-            }" 
-            @click="router.push({ name: tab.route, params: { quizId: route.params.quizId }})"
-            class="px-4 py-2 rounded-lg cursor-pointer font-medium transition-colors duration-200 flex-shrink-0 border"
-          >
-            {{ tab.label }}
-          </div>
-        </div>
+        <TabList
+          v-model="selectedTab"
+          :tabs="tabs"
+        />
       </template>
     </SubHeader>
 

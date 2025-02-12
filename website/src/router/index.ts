@@ -17,49 +17,52 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
-      meta: { requiresAuth: true, title: 'Home', backRoute: null }
+      meta: { requiresAuth: true, title: 'Home', backRoute: null },
     },
     {
       path: '/students',
       name: 'students',
       component: StudentsView,
-      meta: { requiresAuth: true, title: 'Students', backRoute: { name: 'home' } }
+      meta: { requiresAuth: true, title: 'Students', backRoute: { name: 'home' } },
     },
     {
       path: '/students/:studentId',
       name: 'student',
       component: StudentView,
-      meta: { requiresAuth: true, backRoute: { name: 'students' } }
+      meta: { requiresAuth: true, title: 'Student', backRoute: { name: 'students' } },
     },
     {
       path: '/quizzes',
       name: 'quizzes',
       component: QuizzesView,
-      meta: { requiresAuth: true, title: 'Quizzes', backRoute: { name: 'home' } }
+      meta: { requiresAuth: true, title: 'Quizzes', backRoute: { name: 'home' } },
     },
     {
       path: '/quizzes/:quizId',
       name: 'quiz',
       component: QuizView,
-      meta: { requiresAuth: true, backRoute: { name: 'quizzes' } },
+      meta: { requiresAuth: true, title: 'Quiz', backRoute: { name: 'quizzes' } },
       redirect: { name: 'quiz-overview' },
       children: [
         { 
           path: 'overview', 
           name: 'quiz-overview',
           component: QuizOverviewView,
+          meta: { requiresAuth: true, preserveParentTitle: true },
         },
         { 
           path: 'questions', 
           name: 'quiz-questions',
           component: QuizQuestionsView,
+          meta: { requiresAuth: true, preserveParentTitle: true },
         },
         { 
           path: 'responses', 
           name: 'quiz-responses',
           component: QuizResponsesView,
-        }
-      ]
+          meta: { requiresAuth: true, preserveParentTitle: true },
+        },
+      ],
     },
     {
       path: '/quizzes/:quizId/responses/:responseId',
@@ -68,23 +71,23 @@ const router = createRouter({
       meta: { 
         requiresAuth: true, 
         backRoute: { name: 'quiz-responses' },
-      }
+      },
     },
     {
       path: '/settings',
       name: 'settings',
       component: SettingsView,
-      meta: { requiresAuth: true, title: 'Settings', backRoute: { name: 'home' } }
-    }
-  ]
+      meta: { requiresAuth: true, title: 'Settings', backRoute: { name: 'home' } },
+    },
+  ],
 })
 
-// Simple navigation guard just for logging
+// Navigation guard for authentication and title updates
 router.beforeEach((to, from, next) => {
   console.log('Navigation:', { 
     to: to.path, 
     from: from.path,
-    matched: to.matched.length > 0
+    matched: to.matched.length > 0,
   })
   next()
 })

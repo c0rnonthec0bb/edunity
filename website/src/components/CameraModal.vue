@@ -15,7 +15,6 @@
           autoplay
           playsinline
           muted
-          @click="capture"
         ></video>
         <img
           v-show="photo"

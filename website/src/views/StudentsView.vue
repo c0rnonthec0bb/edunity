@@ -1,12 +1,21 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStudents } from '@/composables/useStudents'
 import SubHeader from '@/components/SubHeader.vue'
 import Modal from '@/components/Modal.vue'
+import TextInput from '@/components/TextInput.vue'
 
 const router = useRouter()
 const { students, loading, error, addStudent } = useStudents()
+
+const sortedStudents = computed(() => {
+  return [...students.value].sort((a, b) => {
+    const nameA = a.name?.trim() || 'Unnamed Student'
+    const nameB = b.name?.trim() || 'Unnamed Student'
+    return nameA.localeCompare(nameB)
+  })
+})
 
 const showAddModal = ref(false)
 const newStudentName = ref('')
@@ -71,14 +80,14 @@ defineExpose({
       </div>
 
       <!-- Students list -->
-      <div v-else-if="students.length > 0" class="space-y-4">
+      <div v-else-if="sortedStudents.length > 0" class="space-y-4">
         <div
-          v-for="student in students"
+          v-for="student in sortedStudents"
           :key="student.id"
           @click="router.push({ name: 'student', params: { studentId: student.id } })"
-          class="bg-white p-4 rounded-lg shadow flex justify-between items-center cursor-pointer hover:bg-gray-50 transition-colors"
+          class="bg-white p-4 rounded-lg shadow flex justify-between items-center cursor-pointer hover:bg-gray-100 transition-colors"
         >
-          <span class="text-gray-900">{{ student.name }}</span>
+          <span class="text-gray-900">{{ student.name?.trim() || 'Unnamed Student' }}</span>
           <span class="text-gray-500 text-sm">
             Added {{ student.createdAt.toLocaleDateString() }}
           </span>
@@ -101,15 +110,10 @@ defineExpose({
       >
         <div class="space-y-4">
           <div>
-            <label for="studentName" class="block text-sm font-medium text-gray-700 mb-1">
-              Name
-            </label>
-            <input
-              id="studentName"
+            <label class="block text-sm font-medium text-gray-700">Student Name</label>
+            <TextInput
               v-model="newStudentName"
-              type="text"
-              placeholder="Student Name"
-              class="w-full px-4 py-2 text-base text-gray-900 bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-theme-500 focus:border-transparent"
+              placeholder="Enter student name"
             />
           </div>
         </div>

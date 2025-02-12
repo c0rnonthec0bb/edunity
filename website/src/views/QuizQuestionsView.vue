@@ -43,18 +43,23 @@ const upload = async () => {
 
 <template>
   <div class="space-y-6">
-    <div class="card flex flex-col gap-6 items-center justify-center">
+    <div class="card">
       <Toast />
-      <FileUpload 
-        ref="fileupload" 
-        mode="basic" 
-        name="file" 
-        url="/api/upload" 
-        accept="application/pdf" 
-        :maxFileSize="5000000" 
-        @upload="upload" 
-      />
-      <Button label="Upload and Generate" @click="upload" severity="secondary" />
+      <div class="flex gap-2 justify-center">
+        <div class="flex-1">
+          <FileUpload 
+            ref="fileupload" 
+            mode="basic" 
+            name="file" 
+            url="/api/upload" 
+            accept="application/pdf" 
+            :maxFileSize="5000000" 
+            @upload="upload"
+            class="w-full"
+          />
+        </div>
+        <Button label="Upload" @click="upload" severity="secondary" class="flex-1" />
+      </div>
     </div>
 
     <!-- Display Extracted Text -->

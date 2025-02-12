@@ -1,12 +1,20 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from './composables/useAuth'
+import { usePageTitle } from './composables/usePageTitle'
 import MainHeader from './components/MainHeader.vue'
 import SignInView from './views/SignInView.vue'
 
 const router = useRouter()
 const route = useRoute()
 const { user, loading, signInWithGoogle } = useAuth()
+const { title } = usePageTitle()
+
+// Update document title when it changes
+import { watch } from 'vue'
+watch(title, (newTitle) => {
+  document.title = newTitle
+}, { immediate: true })
 </script>
 
 <template>
@@ -16,7 +24,7 @@ const { user, loading, signInWithGoogle } = useAuth()
   </div>
 
   <!-- Main app -->
-  <div v-else class="min-h-screen bg-gray-50">
+  <div v-else class="min-h-screen bg-gray-100">
     <template v-if="user">
       <MainHeader />
       <div class="min-h-[calc(100vh-4rem)]">

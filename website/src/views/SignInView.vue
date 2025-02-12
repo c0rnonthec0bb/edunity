@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50">
+  <div class="min-h-screen flex items-center justify-center bg-gray-100">
     <div class="text-center">
       <h1 class="text-4xl font-bold text-theme-600 mb-8">
         Edunity.ai

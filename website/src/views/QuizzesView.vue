@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useQuizzes } from '@/composables/useQuizzes'
 import SubHeader from '@/components/SubHeader.vue'
 import Modal from '@/components/Modal.vue'
-import { nanoid } from 'nanoid'
+import TextInput from '@/components/TextInput.vue'
 
 const router = useRouter()
 const { quizzes, loading, error, addQuiz } = useQuizzes()
@@ -15,11 +15,7 @@ const newQuizName = ref('')
 const handleCreateQuiz = async () => {
   if (!newQuizName.value) return
 
-  await addQuiz({
-    id: nanoid(),
-    name: newQuizName.value,
-    questions: []
-  })
+  await addQuiz(newQuizName.value, [])
 
   newQuizName.value = ''
   showCreateModal.value = false
@@ -27,7 +23,7 @@ const handleCreateQuiz = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-gray-100">
     <SubHeader title="Quizzes">
       <template #action>
         <button
@@ -88,17 +84,12 @@ const handleCreateQuiz = async () => {
       ]"
     >
       <div class="space-y-4">
-        <div>
-          <label for="name" class="block text-sm font-medium text-gray-700">
-            Quiz Name
-          </label>
-          <input
-            id="name"
-            v-model="newQuizName"
-            type="text"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-theme-500 focus:ring-theme-500 sm:text-sm"
-          />
-        </div>
+        <TextInput
+          v-model="newQuizName"
+          label="Quiz Name"
+          placeholder="Enter quiz name"
+          @keyup.enter="handleCreateQuiz"
+        />
       </div>
     </Modal>
   </div>

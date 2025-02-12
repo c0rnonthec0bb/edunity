@@ -8,8 +8,7 @@ export interface Question {
   id: string
   question: string
   answer: string
-  type: 'multiple_choice' | 'short_answer'
-  choices?: string[]
+  points: number
 }
 
 export interface Quiz extends DocumentData {
@@ -159,5 +158,45 @@ export function useQuizzes() {
     getQuiz,
     updateQuiz,
     deleteQuiz
+  }
+}
+
+export function useQuiz(quizId: string) {
+  const quiz = ref<Quiz | null>(null)
+  const loading = ref(false)
+  const error = ref<string | null>(null)
+
+  const fetchQuiz = async () => {
+    loading.value = true
+    error.value = null
+
+    try {
+      const doc = await firestore.getDoc(QUIZ_DOC_PATH(quizId))
+      if (doc.exists) {
+        const data = doc.data
+        quiz.value = {
+          id: doc.id,
+          ...data
+        } as Quiz
+      } else {
+        quiz.value = null
+      }
+    } catch (e) {
+      console.error('Error fetching quiz:', e)
+      error.value = 'Failed to fetch quiz'
+      quiz.value = null
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Fetch quiz immediately
+  fetchQuiz()
+
+  return {
+    quiz,
+    loading,
+    error,
+    refresh: fetchQuiz
   }
 }

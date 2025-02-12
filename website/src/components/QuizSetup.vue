@@ -1,37 +1,45 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useQuizzes, type QuizQuestion } from '@/composables/useQuizzes'
+import { useQuizzes, type Question } from '@/composables/useQuizzes'
 import { nanoid } from 'nanoid'
 import draggable from 'vuedraggable'
 import Modal from './Modal.vue'
+import TextInput from './TextInput.vue'
+import Button from 'primevue/button'
 
 const props = defineProps<{
   quizId: string
 }>()
 
-const { quizzes, updateQuizQuestions } = useQuizzes()
+const { quizzes, updateQuiz } = useQuizzes()
 const quiz = computed(() => quizzes.value.find(q => q.id === props.quizId))
 const questions = computed({
-  get: () => [...(quiz.value?.questions || [])].sort((a, b) => a.order - b.order),
+  get: () => [...(quiz.value?.questions || [])],
   set: async (newQuestions) => {
     if (!quiz.value) return
-    const reorderedQuestions = newQuestions.map((q, index) => ({
-      ...q,
-      order: index
-    }))
-    await updateQuizQuestions(quiz.value.id, reorderedQuestions)
+    await updateQuiz(quiz.value.id, { questions: newQuestions })
   }
 })
 
 const showAddModal = ref(false)
 const showEditModal = ref(false)
 const showDeleteModal = ref(false)
-const newQuestion = ref('')
-const newAnswer = ref('')
-const editingQuestion = ref<QuizQuestion | null>(null)
-const deletingQuestion = ref<QuizQuestion | null>(null)
-const editedQuestion = ref('')
-const editedAnswer = ref('')
+
+const defaultPoints = 5
+
+const newQuestion = ref({
+  question: '',
+  answer: '',
+  points: defaultPoints.toString()
+})
+
+const editingQuestion = ref<Question | null>(null)
+const deletingQuestion = ref<Question | null>(null)
+const editedQuestion = ref({
+  question: '',
+  answer: '',
+  points: defaultPoints.toString()
+})
 
 const addQuestion = async () => {
   if (!quiz.value) return
@@ -40,19 +48,22 @@ const addQuestion = async () => {
     ...questions.value,
     {
       id: nanoid(),
-      question: newQuestion.value,
-      answer: newAnswer.value,
-      order: questions.value.length
+      question: newQuestion.value.question,
+      answer: newQuestion.value.answer,
+      points: parseInt(newQuestion.value.points) || defaultPoints
     }
   ]
   
-  await updateQuizQuestions(quiz.value.id, updatedQuestions)
-  newQuestion.value = ''
-  newAnswer.value = ''
+  await updateQuiz(quiz.value.id, { questions: updatedQuestions })
+  newQuestion.value = {
+    question: '',
+    answer: '',
+    points: defaultPoints.toString()
+  }
   showAddModal.value = false
 }
 
-const confirmDelete = (question: QuizQuestion) => {
+const confirmDelete = (question: Question) => {
   deletingQuestion.value = question
   showDeleteModal.value = true
 }
@@ -60,19 +71,20 @@ const confirmDelete = (question: QuizQuestion) => {
 const removeQuestion = async () => {
   if (!quiz.value || !deletingQuestion.value) return
   
-  const updatedQuestions = questions.value
-    .filter(q => q.id !== deletingQuestion.value?.id)
-    .map((q, index) => ({ ...q, order: index }))
+  const updatedQuestions = questions.value.filter(q => q.id !== deletingQuestion.value?.id)
   
-  await updateQuizQuestions(quiz.value.id, updatedQuestions)
-  showDeleteModal.value = false
+  await updateQuiz(quiz.value.id, { questions: updatedQuestions })
   deletingQuestion.value = null
+  showDeleteModal.value = false
 }
 
-const startEditing = (question: QuizQuestion) => {
-  editingQuestion.value = { ...question }
-  editedQuestion.value = question.question
-  editedAnswer.value = question.answer
+const startEditing = (question: Question) => {
+  editingQuestion.value = question
+  editedQuestion.value = {
+    question: question.question,
+    answer: question.answer,
+    points: (question.points ?? defaultPoints).toString()
+  }
   showEditModal.value = true
 }
 
@@ -80,26 +92,22 @@ const saveEdit = async () => {
   if (!quiz.value || !editingQuestion.value) return
   
   const updatedQuestions = questions.value.map(q => 
-    q.id === editingQuestion.value?.id ? { ...q, question: editedQuestion.value, answer: editedAnswer.value } : q
+    q.id === editingQuestion.value?.id ? { 
+      ...q, 
+      question: editedQuestion.value.question,
+      answer: editedQuestion.value.answer,
+      points: parseInt(editedQuestion.value.points) || defaultPoints
+    } : q
   )
   
-  await updateQuizQuestions(quiz.value.id, updatedQuestions)
-  showEditModal.value = false
+  await updateQuiz(quiz.value.id, { questions: updatedQuestions })
   editingQuestion.value = null
-  editedQuestion.value = ''
-  editedAnswer.value = ''
-}
-
-const handleDeleteQuestion = async () => {
-  await removeQuestion()
-}
-
-const handleAddQuestion = async () => {
-  await addQuestion()
-}
-
-const handleEditQuestion = async () => {
-  await saveEdit()
+  editedQuestion.value = {
+    question: '',
+    answer: '',
+    points: defaultPoints.toString()
+  }
+  showEditModal.value = false
 }
 </script>
 
@@ -112,75 +120,44 @@ const handleEditQuestion = async () => {
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
       </svg>
-      Add Quiz Question
+      Add Question
     </button>
 
-    <div v-if="questions.length === 0" class="text-center text-gray-500 py-8">
-      No questions yet
-    </div>
-
-    <!-- Question List -->
-    <div v-if="questions.length > 0">
+    <!-- Question list -->
+    <div class="space-y-4">
       <draggable
         v-model="questions"
-        :animation="150"
         item-key="id"
-        class="space-y-3"
         handle=".drag-handle"
-        ghost-class="opacity-50"
+        class="space-y-4"
       >
-        <template #item="{ element: question, index }">
-          <div
-            class="bg-white rounded-lg shadow p-4 group hover:shadow-md transition-shadow"
-          >
-            <div class="flex items-start justify-between gap-4">
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="text-sm font-medium text-gray-500">Question {{ index + 1 }}</span>
-                  <button
-                    @click="startEditing(question)"
-                    class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 active:text-gray-800 cursor-pointer rounded-full hover:bg-gray-100 active:bg-gray-200"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                      />
+        <template #item="{ element: question }">
+          <div class="bg-white rounded-lg shadow">
+            <div class="p-4">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                  <button class="drag-handle p-2 text-gray-400 hover:text-gray-500 cursor-move">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                    </svg>
+                  </button>
+                  <button @click="startEditing(question)" class="p-2 text-gray-400 hover:text-gray-500">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  <button @click="confirmDelete(question)" class="p-2 text-gray-400 hover:text-gray-500">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>
                 </div>
-                <p class="text-gray-900 font-medium mb-1 line-clamp-5">{{ question.question }}</p>
-                <p class="text-gray-600 line-clamp-5">{{ question.answer }}</p>
+                <div class="text-gray-600">
+                  {{ question.points }} points
+                </div>
               </div>
-              <div class="flex items-center gap-2">
-                <button
-                  @click="confirmDelete(question)"
-                  class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-600 active:text-red-700 cursor-pointer rounded-full hover:bg-gray-100 active:bg-gray-200"
-                >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    />
-                  </svg>
-                </button>
-                <button
-                  class="drag-handle w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 active:text-gray-800 cursor-move rounded-full hover:bg-gray-100 active:bg-gray-200"
-                >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M4 8h16M4 16h16"
-                    />
-                  </svg>
-                </button>
-              </div>
+              <p class="text-gray-900 font-medium mb-1 line-clamp-5">{{ question.question }}</p>
+              <p class="text-gray-600 line-clamp-5">{{ question.answer }}</p>
             </div>
           </div>
         </template>
@@ -191,90 +168,126 @@ const handleEditQuestion = async () => {
     <Modal
       v-model="showAddModal"
       title="Add Question"
-      confirm-text="Add Question"
-      cancel-text="Cancel"
-      max-width="max-w-lg"
-      @confirm="handleAddQuestion"
     >
       <div class="space-y-4">
         <div>
-          <label for="question" class="block text-sm font-medium text-gray-700 mb-1">
-            Question
-          </label>
-          <input
-            id="question"
-            v-model="newQuestion"
-            type="text"
-            placeholder="Enter question"
-            class="w-full px-4 py-2 text-base text-gray-900 bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-theme-500 focus:border-transparent"
+          <label class="block text-sm font-medium text-gray-700">Question</label>
+          <TextInput
+            v-model="newQuestion.question"
+            placeholder="Enter your question"
+            multiline
           />
         </div>
 
         <div>
-          <label for="answer" class="block text-sm font-medium text-gray-700 mb-1">
-            Answer
-          </label>
-          <input
-            id="answer"
-            v-model="newAnswer"
-            type="text"
-            placeholder="Enter answer"
-            class="w-full px-4 py-2 text-base text-gray-900 bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-theme-500 focus:border-transparent"
+          <label class="block text-sm font-medium text-gray-700">Answer</label>
+          <TextInput
+            v-model="newQuestion.answer"
+            placeholder="Enter the answer"
+            multiline
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Points</label>
+          <TextInput
+            v-model="newQuestion.points"
+            type="number"
+            placeholder="Enter points (default: 5)"
           />
         </div>
       </div>
+
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <Button
+            label="Cancel"
+            severity="secondary"
+            text
+            @click="showAddModal = false"
+          />
+          <Button
+            label="Add Question"
+            class="bg-theme-500 hover:bg-theme-600 border-theme-500 hover:border-theme-600"
+            @click="addQuestion"
+          />
+        </div>
+      </template>
     </Modal>
 
     <!-- Edit Question Modal -->
     <Modal
       v-model="showEditModal"
       title="Edit Question"
-      confirm-text="Save Changes"
-      cancel-text="Cancel"
-      max-width="max-w-lg"
-      @confirm="handleEditQuestion"
     >
       <div class="space-y-4">
         <div>
-          <label for="edit-question" class="block text-sm font-medium text-gray-700 mb-1">
-            Question
-          </label>
-          <input
-            id="edit-question"
-            v-model="editedQuestion"
-            type="text"
-            placeholder="Enter question"
-            class="w-full px-4 py-2 text-base text-gray-900 bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-theme-500 focus:border-transparent"
+          <label class="block text-sm font-medium text-gray-700">Question</label>
+          <TextInput
+            v-model="editedQuestion.question"
+            placeholder="Enter your question"
+            multiline
           />
         </div>
 
         <div>
-          <label for="edit-answer" class="block text-sm font-medium text-gray-700 mb-1">
-            Answer
-          </label>
-          <input
-            id="edit-answer"
-            v-model="editedAnswer"
-            type="text"
-            placeholder="Enter answer"
-            class="w-full px-4 py-2 text-base text-gray-900 bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-theme-500 focus:border-transparent"
+          <label class="block text-sm font-medium text-gray-700">Answer</label>
+          <TextInput
+            v-model="editedQuestion.answer"
+            placeholder="Enter the answer"
+            multiline
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Points</label>
+          <TextInput
+            v-model="editedQuestion.points"
+            type="number"
+            placeholder="Enter points (default: 5)"
           />
         </div>
       </div>
+
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <Button
+            label="Cancel"
+            severity="secondary"
+            text
+            @click="showEditModal = false"
+          />
+          <Button
+            label="Save Changes"
+            class="bg-theme-500 hover:bg-theme-600 border-theme-500 hover:border-theme-600"
+            @click="saveEdit"
+          />
+        </div>
+      </template>
     </Modal>
 
     <!-- Delete Confirmation Modal -->
     <Modal
       v-model="showDeleteModal"
       title="Delete Question"
-      :actions="[
-        { label: 'Cancel', onClick: () => showDeleteModal = false },
-        { label: 'Delete', onClick: handleDeleteQuestion, variant: 'danger' }
-      ]"
     >
-      <p class="text-gray-700">
-        Are you sure you want to delete this question? This action cannot be undone.
-      </p>
+      <p class="text-gray-700">Are you sure you want to delete this question? This action cannot be undone.</p>
+
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <Button
+            label="Cancel"
+            severity="secondary"
+            text
+            @click="showDeleteModal = false"
+          />
+          <Button
+            label="Delete"
+            severity="danger"
+            @click="removeQuestion"
+          />
+        </div>
+      </template>
     </Modal>
   </div>
 </template>

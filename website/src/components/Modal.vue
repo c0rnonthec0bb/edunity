@@ -66,7 +66,7 @@
                 </div>
 
                 <!-- Footer -->
-                <div class="px-6 py-4 bg-gray-50 rounded-b-lg flex justify-end gap-3">
+                <div class="px-6 py-4 bg-gray-100 rounded-b-lg flex justify-end gap-3">
                   <slot name="footer">
                     <template v-if="actions">
                       <button
@@ -79,7 +79,7 @@
                             ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500 border-transparent text-white'
                             : action.variant === 'primary'
                               ? 'bg-theme-500 hover:bg-theme-600 focus:ring-theme-500 border-transparent text-white'
-                              : 'bg-white hover:bg-gray-50 focus:ring-theme-500 border border-gray-300 text-gray-700'
+                              : 'bg-white hover:bg-gray-100 focus:ring-theme-500 border border-gray-300 text-gray-700'
                         ]"
                       >
                         {{ action.label }}

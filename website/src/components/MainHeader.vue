@@ -47,7 +47,7 @@ onUnmounted(() => {
             @click="showMenu = !showMenu"
             class="flex items-center justify-center w-8 h-8 bg-white rounded-full"
           >
-            <svg class="w-5 h-5 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 text-theme-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -68,14 +68,14 @@ onUnmounted(() => {
             </div>
             <router-link
               :to="{ name: 'settings' }"
-              class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               @click="showMenu = false"
             >
               Settings
             </router-link>
             <button
               @click="handleSignOut"
-              class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
               Sign Out
             </button>

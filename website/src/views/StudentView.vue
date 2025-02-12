@@ -3,33 +3,36 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useStudents } from '@/composables/useStudents'
 import { useDebounce } from '@/composables/useDebounce'
+import { usePageTitle } from '@/composables/usePageTitle'
 import SubHeader from '@/components/SubHeader.vue'
 import Modal from '@/components/Modal.vue'
+import TextInput from '@/components/TextInput.vue'
 
 const router = useRouter()
 const route = useRoute()
 const { students, loading, error, deleteStudent, updateStudent } = useStudents()
+const { updateTitle } = usePageTitle()
 
 const showDeleteModal = ref(false)
 const studentId = route.params.studentId as string
 const student = computed(() => students.value.find(s => s.id === studentId))
 
-const studentName = computed({
-  get: () => student.value?.name || '',
-  set: (newName) => {
-    if (student.value) {
-      updateStudent(studentId, { name: newName })
-    }
+const editedName = ref(student.value?.name || '')
+const editedNotes = ref(student.value?.notes || '')
+
+const debouncedNotes = useDebounce(editedNotes, 500)
+
+// Watch for student changes to update local values and title
+watch(() => student.value?.name, (newName) => {
+  if (newName !== editedName.value) {
+    editedName.value = newName || ''
+    updateTitle(newName)
   }
 })
 
-const studentNotes = ref(student.value?.notes || '')
-const debouncedNotes = useDebounce(studentNotes, 500)
-
-// Watch for student changes to update local values
 watch(() => student.value?.notes, (newNotes) => {
-  if (newNotes !== studentNotes.value) {
-    studentNotes.value = newNotes || ''
+  if (newNotes !== editedNotes.value) {
+    editedNotes.value = newNotes || ''
   }
 })
 
@@ -38,6 +41,14 @@ watch(debouncedNotes, async (newNotes) => {
   if (student.value && newNotes !== student.value.notes) {
     await updateStudent(student.value.id, {
       notes: newNotes
+    })
+  }
+})
+
+watch(editedName, async (newName) => {
+  if (student.value && newName !== student.value.name) {
+    await updateStudent(student.value.id, {
+      name: newName
     })
   }
 })
@@ -92,25 +103,24 @@ const handleDelete = async () => {
       <!-- Student details -->
       <div v-else class="bg-white rounded-lg shadow">
         <div class="p-6 space-y-6">
-          <!-- Name -->
-          <div>
-            <h3 class="text-lg font-medium text-gray-900 mb-2">Name</h3>
-            <input
-              v-model="studentName"
-              type="text"
-              placeholder="Student Name"
-              class="w-full px-4 py-2 text-xl font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-theme-500 focus:border-transparent"
-            />
-          </div>
-          
-          <!-- Notes -->
-          <div>
-            <h3 class="text-lg font-medium text-gray-900 mb-2">Notes</h3>
-            <textarea
-              v-model="studentNotes"
-              placeholder="Add notes about this student..."
-              class="w-full px-4 py-2 text-base text-gray-900 bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-theme-500 focus:border-transparent min-h-[100px] resize-y"
-            />
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Student Name</label>
+              <TextInput
+                v-model="editedName"
+                placeholder="Enter student name"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Notes</label>
+              <TextInput
+                v-model="editedNotes"
+                placeholder="Enter notes"
+                multiline
+                rows="4"
+              />
+            </div>
           </div>
         </div>
       </div>

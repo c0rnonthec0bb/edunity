@@ -1,36 +1,49 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useQuizResponses } from '@/composables/useQuizResponses'
+import { useStudents } from '@/composables/useStudents'
 import CameraModal from '@/components/CameraModal.vue'
-import Modal from '@/components/Modal.vue' // Import the Modal component
+import Modal from '@/components/Modal.vue'
+import QuizResponsePreview from '@/components/quiz/QuizResponsePreview.vue'
 
 const route = useRoute()
 const quizId = route.params.quizId as string
-const { responses, uploadingCount, error: responsesError, uploadResponse } = useQuizResponses({ 
-  quizId
+
+const { responses, responsesError, uploadingCount, uploadResponse } = useQuizResponses({
+  quizId,
 })
 
+const { students, loading: studentsLoading } = useStudents()
+
 const showCameraModal = ref(false)
-const showDeleteModal = ref(false) // Add a ref for the delete modal
+const showDeleteModal = ref(false)
 
 const handlePhotoUpload = async (photo: Blob) => {
   try {
     await uploadResponse(photo)
-  } catch (err) {
-    console.error('Failed to upload photo:', err)
+  } catch (error) {
+    console.error('Error uploading photo:', error)
   }
 }
 
-const handleDelete = () => { // Add a function for the delete action
-  // Implement the delete logic here
+const handleDelete = () => {
   console.log('Delete response')
   showDeleteModal.value = false
+}
+
+const getStudentForResponse = (response: {
+  studentId: string | null
+  manualStudentId: string | null
+}) => {
+  const studentId = response.manualStudentId || response.studentId
+  if (!studentId) return null
+  return students.value.find(s => s.id === studentId) || null
 }
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
     <!-- Error message -->
     <div v-if="responsesError" class="text-red-600 mb-4">
       {{ responsesError }}
@@ -63,6 +76,37 @@ const handleDelete = () => { // Add a function for the delete action
       {{ responses.length === 0 ? 'Upload Responses' : 'Upload More Responses' }}
     </button>
 
+    <!-- Camera Modal -->
+    <CameraModal
+      v-model="showCameraModal"
+      @upload="handlePhotoUpload"
+    />
+
+    <!-- Delete Modal -->
+    <Modal
+      v-if="showDeleteModal"
+      title="Delete Response"
+      @close="showDeleteModal = false"
+    >
+      <p class="text-gray-700 mb-4">
+        Are you sure you want to delete this response?
+      </p>
+      <div class="flex justify-end space-x-2">
+        <button
+          @click="showDeleteModal = false"
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          Cancel
+        </button>
+        <button
+          @click="handleDelete"
+          class="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+        >
+          Delete
+        </button>
+      </div>
+    </Modal>
+
     <!-- Uploading banner -->
     <div 
       v-if="uploadingCount > 0"
@@ -86,50 +130,22 @@ const handleDelete = () => { // Add a function for the delete action
       {{ uploadingCount === 1 ? 'Response uploading...' : `${uploadingCount} responses uploading...` }}
     </div>
 
-    <!-- No responses message -->
-    <div v-if="!responses.length" class="text-gray-500 text-center py-8">
-      No responses yet
-    </div>
-
-    <!-- Response list -->
-    <div v-else class="space-y-4">
-      <router-link
+    <!-- Content -->
+    <div class="space-y-4">
+      <div v-if="!responses.length" class="p-4 text-center text-gray-500">
+        No responses yet
+      </div>
+      <RouterLink
+        v-else
         v-for="response in responses"
         :key="response.id"
-        :to="{ name: 'quiz-response', params: { quizId, responseId: response.id }}"
-        class="block bg-white shadow rounded-lg p-4 hover:shadow-md transition-shadow"
+        :to="{ name: 'quiz-response', params: { quizId, responseId: response.id } }"
       >
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="text-sm text-gray-500">
-              {{ new Date(response.createdAt).toLocaleString() }}
-            </div>
-          </div>
-          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-          </svg>
-        </div>
-      </router-link>
+        <QuizResponsePreview
+          :response="response"
+          :student="getStudentForResponse(response)"
+        />
+      </RouterLink>
     </div>
-
-    <!-- Delete Modal -->
-    <Modal
-      v-model="showDeleteModal"
-      title="Delete Response"
-      :actions="[
-        { label: 'Cancel', onClick: () => showDeleteModal = false },
-        { label: 'Delete', onClick: () => handleDelete(), variant: 'danger' }
-      ]"
-    >
-      <p class="text-gray-700">
-        Are you sure you want to delete this response? This action cannot be undone.
-      </p>
-    </Modal>
-
-    <!-- Camera Modal -->
-    <CameraModal
-      v-model="showCameraModal"
-      @upload="handlePhotoUpload"
-    />
   </div>
 </template>
