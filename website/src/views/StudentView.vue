@@ -7,6 +7,11 @@ import { usePageTitle } from '@/composables/usePageTitle'
 import SubHeader from '@/components/SubHeader.vue'
 import Modal from '@/components/Modal.vue'
 import TextInput from '@/components/TextInput.vue'
+import StudentQuizGrades from '@/components/StudentQuizGrades.vue'
+import TabView from 'primevue/tabview'
+import TabPanel from 'primevue/tabpanel'
+
+const activeTabIndex = ref(0)
 
 const router = useRouter()
 const route = useRoute()
@@ -61,7 +66,7 @@ const handleDelete = async () => {
 </script>
 
 <template>
-  <div>
+  <div class="space-y-4">
     <SubHeader 
       :title="student?.name || ''"
       super-title="Student"
@@ -95,36 +100,32 @@ const handleDelete = async () => {
       </div>
 
       <!-- Loading state -->
-      <div v-if="loading" class="text-gray-600">Loading...</div>
+      <div v-else-if="loading" class="text-gray-600">Loading...</div>
 
       <!-- Student not found -->
       <div v-else-if="!student" class="text-gray-600">Student not found.</div>
 
       <!-- Student details -->
-      <div v-else class="bg-white rounded-lg shadow">
-        <div class="p-6 space-y-6">
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Student Name</label>
-              <TextInput
-                v-model="editedName"
-                placeholder="Enter student name"
-              />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Notes</label>
-              <TextInput
-                v-model="editedNotes"
-                placeholder="Enter notes"
-                multiline
-                rows="4"
-              />
-            </div>
-          </div>
-        </div>
+      <div v-else class="bg-white rounded-lg shadow p-6">
+        <TabView v-model:activeIndex="activeTabIndex">
+          <TabPanel header="Details" :pt="{ root: { class: 'p-4' } }">
+            <TextInput
+              v-model="editedName"
+              label="Name"
+              class="mb-4"
+            />
+            <TextInput
+              v-model="editedNotes"
+              label="Notes"
+              type="textarea"
+              :rows="4"
+            />
+          </TabPanel>
+          <TabPanel header="Quiz Grades" :pt="{ root: { class: 'p-4' } }">
+            <StudentQuizGrades :student-id="studentId" />
+          </TabPanel>
+        </TabView>
       </div>
-    </div>
 
     <!-- Delete Confirmation Modal -->
     <Modal
@@ -139,5 +140,6 @@ const handleDelete = async () => {
         Are you sure you want to delete this student? This action cannot be undone.
       </p>
     </Modal>
+    </div>
   </div>
 </template>
