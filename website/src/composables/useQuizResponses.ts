@@ -4,7 +4,8 @@ import { firestore, storage } from '@/firebase'
 import { ref as storageRef, uploadBytes, deleteObject, getDownloadURL } from 'firebase/storage'
 import { useAuth } from '@/composables/useAuth'
 import { nanoid } from 'nanoid'
-import { QUIZ_RESPONSES_COL_PATH, QUIZ_RESPONSE_DOC_PATH } from '../../../shared/paths'
+import { QUIZ_RESPONSES_COL_PATH, QUIZ_RESPONSE_DOC_PATH, QUIZZES_COL_PATH } from '../../../shared/paths'
+import firebase from 'firebase/compat/app'
 
 export interface QuestionResponse {
   questionId: string
@@ -89,10 +90,68 @@ export function useQuizResponses(options: UseQuizResponsesOptions = {}) {
           }
         )
       } else if (currentStudentId) {
-        // If we only have studentId, we need to query across all quizzes
-        // This would require a different data structure or a collection group query
-        error.value = 'Filtering by student ID only is not yet supported'
-        loading.value = false
+        // If we only have studentId, use collection group query to get responses across all quizzes
+        console.log('Querying for studentId:', currentStudentId, 'and educatorUserId:', userId)
+        const db = firebase.firestore()
+        unsubscribe = db.collectionGroup('responses')
+          .where('studentId', '==', currentStudentId)
+          .where('educatorUserId', '==', userId)
+          .orderBy('createdAt', 'desc')
+          .onSnapshot(
+            snapshot => {
+              console.log('Got snapshot with', snapshot.docs.length, 'documents')
+              snapshot.docs.forEach(doc => {
+                console.log('Document data:', {
+                  id: doc.id,
+                  path: doc.ref.path,
+                  data: doc.data()
+                })
+              })
+              
+              const allResponses = snapshot.docs.map(doc => {
+                const data = doc.data()
+                console.log('Raw doc data:', data)
+                
+                // Check if response has been graded by looking at autoGradeResults
+                if (!data.autoGradeResults || typeof data.autoGradeResults.totalPointsEarned !== 'number') {
+                  console.log('Skipping ungraded response:', doc.id)
+                  return null
+                }
+                
+                const score = data.autoGradeResults.totalPointsEarned
+                const maxScore = data.autoGradeResults.totalPossiblePoints
+                
+                console.log('Found graded response:', {
+                  id: doc.id,
+                  score,
+                  maxScore,
+                  autoGradeResults: data.autoGradeResults
+                })
+                
+                return {
+                  id: doc.id,
+                  quizId: doc.ref.parent.parent?.id || '',
+                  studentId: data.studentId,
+                  educatorUserId: data.educatorUserId,
+                  score: score,
+                  maxScore: maxScore,
+                  createdAt: data.createdAt,
+                  responses: data.responses,
+                  photoCapturePath: data.photoCapturePath
+                } as QuizResponse
+              })
+              // Filter out null responses (ungraded ones)
+              const validResponses = allResponses.filter(r => r !== null)
+              console.log('Processed responses:', validResponses)
+              responses.value = validResponses
+              loading.value = false
+            },
+            err => {
+              console.error('Error watching responses:', err)
+              error.value = err.message
+              loading.value = false
+            }
+          )
       }
     },
     { immediate: true }

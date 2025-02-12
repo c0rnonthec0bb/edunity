@@ -2,6 +2,11 @@ from flask import Flask, request, jsonify
 import openai
 from flask_cors import CORS
 import pdfplumber
+import json
+import os
+
+# Configure OpenAI API key
+openai.api_key = os.getenv('OPENAI_API_KEY')
 
 app = Flask(__name__)
 
@@ -30,15 +35,45 @@ def generate_questions():
     if not text:
         return jsonify({"error": "No text provided"}), 400
 
-    prompt = f"Generate 5 study questions from this text:\n{text}\nQuestions:"
+    prompt = f"""
+Analyze this text and generate 5 quiz questions. For each question:
+1. Create a clear, specific question that tests understanding
+2. Provide the correct answer
+3. Assign points (1-5) based on question difficulty
+
+Format each question as JSON with these fields:
+- question: the question text
+- answer: the correct answer
+- points: points value (1-5)
+
+Text to analyze:
+{text}
+
+Generate the questions in a JSON array format.
+"""
     
     try:
         response = openai.chat.completions.create(
             model="gpt-4",
-            messages=[{"role": "user", "content": prompt}]
+            messages=[
+                {"role": "system", "content": "You are a skilled educator who creates clear, specific quiz questions. Always respond with valid JSON array of questions."},
+                {"role": "user", "content": prompt}
+            ],
+            response_format={"type": "json_object"}
         )
-        questions = response["choices"][0]["message"]["content"].strip().split("\n")
-        return jsonify({"questions": questions})
+        
+        result = response.choices[0].message.content
+        questions = json.loads(result)["questions"]
+        
+        # Validate and clean up questions
+        validated_questions = []
+        for q in questions:
+            if all(k in q for k in ["question", "answer", "points"]):
+                # Ensure points are between 1 and 5
+                q["points"] = max(1, min(5, int(q["points"])))
+                validated_questions.append(q)
+        
+        return jsonify({"questions": validated_questions})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
