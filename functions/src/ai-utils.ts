@@ -252,3 +252,63 @@ Provide a concise summary (2-6 sentences) focusing on strengths, weaknesses, and
     throw error
   }
 }
+
+export async function summarizeQuizResponses(
+  responseSummaries: Array<{
+    studentId: string
+    studentName: string
+    autoGradeResults: {
+      totalPointsEarned: number
+      totalPossiblePoints: number
+      questionGrades: Array<{
+        questionId: string
+        pointsEarned: number
+        maxPoints: number
+        explanation: string
+      }>
+    }
+  }>,
+  questions: Array<{
+    id: string
+    question: string
+  }>
+): Promise<string> {
+  if (!questions.length) throw new Error('The quiz does not have any questions yet.')
+
+  if (!responseSummaries.length) throw new Error('The quiz does not have any responses yet.')
+
+  const formattedResponses = responseSummaries.map((s) => `
+${s.studentName}:
+- Total Score: ${s.autoGradeResults.totalPointsEarned}/${s.autoGradeResults.totalPossiblePoints}
+- Question Scores: ${s.autoGradeResults.questionGrades.map((g) => `${g.pointsEarned}/${g.maxPoints}`).join(', ')}
+`).join('\n')
+
+  const prompt = `Analyze these quiz results and create a detailed summary. For each question, analyze the responses to identify patterns, common mistakes, and areas where students showed strong understanding.
+
+Focus on:
+1. Overall performance trends
+2. Specific concepts that students understood well
+3. Areas where students struggled
+4. Notable misconceptions or common errors
+5. Suggestions for topics that may need review
+
+Format your response as plain text. Do not use any special formatting or markdown. You may use newlines to separate sections and create structure.
+
+Quiz Results:
+${formattedResponses}`
+
+  const response = await runAi([
+    {
+      type: 'text',
+      text: 'You are an experienced educational analyst helping teachers understand quiz results.',
+    },
+    {
+      type: 'text',
+      text: prompt,
+    },
+  ], {
+    type: 'text',
+  })
+
+  return response.choices[0]?.message?.content || 'Unable to generate summary'
+}

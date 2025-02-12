@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { useQuizzes } from '@/composables/useQuizzes'
 import { useDebounce } from '@/composables/useDebounce'
 import TextInput from '@/components/TextInput.vue'
+import QuizSummarySection from '@/components/quiz/QuizSummarySection.vue'
 
 const route = useRoute()
 const quizId = route.params.quizId as string
@@ -28,10 +29,20 @@ watch(debouncedName, async (newName) => {
 
 <template>
   <div class="space-y-6">
-    <TextInput
-      v-model="quizName"
-      placeholder="Quiz Name"
-      class="text-xl font-medium"
+    <div class="bg-white rounded-lg shadow">
+      <div class="p-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Quiz Name</label>
+          <TextInput
+            v-model="quizName"
+            placeholder="Enter quiz name"
+          />
+        </div>
+      </div>
+    </div>
+    <QuizSummarySection
+      v-if="quiz"
+      :quiz="quiz"
     />
   </div>
 </template>

@@ -1,6 +1,6 @@
 import { functions, firestore } from './firebase'
-import { QUIZ_RESPONSE_DOC_PATH, QUIZ_DOC_PATH, STUDENTS_COL_PATH } from './paths'
-import { parseQuizResponseImage, matchStudentName, gradeQuizResponse } from './ai-utils'
+import { QUIZ_RESPONSE_DOC_PATH, QUIZ_DOC_PATH, STUDENTS_COL_PATH, QUIZ_RESPONSES_COL_PATH, STUDENT_DOC_PATH } from './paths'
+import { parseQuizResponseImage, matchStudentName, gradeQuizResponse, summarizeQuizResponses } from './ai-utils'
 
 interface QuizResponse {
   id: string
@@ -42,12 +42,21 @@ interface Student {
   name: string
 }
 
+interface Quiz {
+  id: string
+  questions: Array<{
+    id: string
+    question: string
+  }>
+  quizResponsesSummaryShouldRunDate?: any
+}
+
 export const onQuizResponseUpdated = functions.onDocUpdated.withOptions(
   { memory: '512MB' },
   QUIZ_RESPONSE_DOC_PATH('{quizId}', '{responseId}'),
   async ({ dataChange, path, params }) => {
     const updates: any = {}
-    const promiseFunctions = []
+    const promiseFunctions: Array<() => Promise<void>> = []
 
     const photoCapturePathChange = dataChange.transform(({ photoCapturePath }: QuizResponse) => photoCapturePath)
     if (photoCapturePathChange.isUnequal) {
@@ -182,6 +191,82 @@ export const onQuizResponseUpdated = functions.onDocUpdated.withOptions(
             })
           }
         }
+      )
+    }
+
+    const shouldResummarizeQuizTrigger = dataChange
+      .transform(({ autoGradeResults, studentId }: QuizResponse) => ({ autoGradeResults, studentId }))
+    if (shouldResummarizeQuizTrigger.isUnequal && shouldResummarizeQuizTrigger.newValue.autoGradeResults && shouldResummarizeQuizTrigger.newValue.studentId) {
+      promiseFunctions.push(
+        async () => {
+          await firestore.updateDoc(QUIZ_DOC_PATH(params.quizId), {
+            quizResponsesSummaryShouldRunDate: firestore.serverTimestamp(),
+          })
+        },
+      )
+    }
+
+    return { updates, promiseFunctions }
+  }
+)
+
+
+export const onQuizUpdated = functions.onDocUpdated.withOptions(
+  { memory: '512MB' },
+  QUIZ_DOC_PATH('{quizId}'),
+  async ({ dataChange, params, path }) => {
+    const updates: any = {}
+    const promiseFunctions: Array<() => Promise<void>> = []
+
+    const quizResponsesSummaryShouldRunTrigger = dataChange
+      .transform(({ quizResponsesSummaryShouldRunDate }: Quiz) => quizResponsesSummaryShouldRunDate)
+    if (quizResponsesSummaryShouldRunTrigger.isUnequal && quizResponsesSummaryShouldRunTrigger.newValue) {
+      updates.quizResponsesSummaryStartDate = firestore.serverTimestamp()
+
+      promiseFunctions.push(
+        async () => {
+          // get the list of quiz responses
+          const quizResponsesSnap = await firestore.getCol(QUIZ_RESPONSES_COL_PATH(params.quizId), [(q) => q.orderBy('createdAt', 'asc')])
+
+          // get a list of response summaries
+          const responseSummaries = (await Promise.all(
+            quizResponsesSnap.docs.map(async (quizResponseDoc) => {
+              const { autoGradeResults, studentId } = quizResponseDoc.data
+              if (!autoGradeResults || !studentId) return undefined
+
+              const studentDoc = await firestore.getDoc(STUDENT_DOC_PATH(studentId))
+              const { name: studentName } = studentDoc.data
+              if (!studentName) return undefined
+
+              return {
+                studentId,
+                studentName,
+                autoGradeResults,
+              }
+            })
+          )).filter((s) => s !== undefined)
+
+          const quizResponsesAverageFractionalScore = responseSummaries
+            .reduce((total, summary) => (total + ((summary.autoGradeResults.totalPointsEarned || 0) / (summary.autoGradeResults.totalPossiblePoints || 0))), 0) / responseSummaries.length
+
+          // summarize the summaries
+          const quiz = dataChange.newValue as Quiz
+          const { questions = [] } = quiz
+
+          let quizResponsesSummary: string | null = null
+          try {
+            quizResponsesSummary = await summarizeQuizResponses(responseSummaries, questions)
+          } catch (error: any) {
+            console.error('Error generating quiz responses summary:', error)
+            quizResponsesSummary = `Failed to generate summary: ${error?.message || 'Unknown error'}`
+          }
+
+          await firestore.updateDoc(path, {
+            quizResponsesAverageFractionalScore,
+            quizResponsesSummary,
+            quizResponsesSummaryEndDate: firestore.serverTimestamp(),
+          })
+        },
       )
     }
 
