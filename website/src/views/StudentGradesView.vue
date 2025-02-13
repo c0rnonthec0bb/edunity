@@ -48,7 +48,7 @@ const formatDate = (date: any) => {
 </script>
 
 <template>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="space-y-4">
       <div v-if="responsesLoading" class="p-4 text-center text-gray-500">
         Loading quiz responses...
@@ -61,8 +61,9 @@ const formatDate = (date: any) => {
         v-for="response in responsesWithQuiz"
         :key="response.id"
         :to="{ name: 'quiz-response', params: { quizId: response.quizId, responseId: response.id } }"
-      >
-        <div class="flex items-center justify-between bg-white rounded-lg shadow hover:shadow-md transition-shadow px-4 py-3 hover:bg-gray-100">
+        class="block no-underline hover:no-underline hover:bg-transparent"
+        >
+        <div class="flex items-center justify-between bg-white rounded-lg shadow hover:shadow-md transition-shadow px-4 py-3 hover:bg-gray-100 gap-3">
           <div class="min-w-0 flex-1">
             <div class="text-m font-medium text-gray-900">
               {{ response.quiz?.name }}
