@@ -2,6 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
 import StudentsView from '@/views/StudentsView.vue'
 import StudentView from '@/views/StudentView.vue'
+import StudentDetailsView from '@/views/StudentDetailsView.vue'
+import StudentGradesView from '@/views/StudentGradesView.vue'
 import QuizzesView from '@/views/QuizzesView.vue'
 import QuizView from '@/views/QuizView.vue'
 import QuizOverviewView from '@/views/QuizOverviewView.vue'
@@ -30,6 +32,21 @@ const router = createRouter({
       name: 'student',
       component: StudentView,
       meta: { requiresAuth: true, title: 'Student', backRoute: { name: 'students' } },
+      redirect: { name: 'student-details' },
+      children: [
+        {
+          path: 'details',
+          name: 'student-details',
+          component: StudentDetailsView,
+          meta: { requiresAuth: true, preserveParentTitle: true },
+        },
+        {
+          path: 'grades',
+          name: 'student-grades',
+          component: StudentGradesView,
+          meta: { requiresAuth: true, preserveParentTitle: true },
+        },
+      ],
     },
     {
       path: '/quizzes',

@@ -1,59 +1,38 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useStudents } from '@/composables/useStudents'
-import { useDebounce } from '@/composables/useDebounce'
 import { usePageTitle } from '@/composables/usePageTitle'
 import SubHeader from '@/components/SubHeader.vue'
 import Modal from '@/components/Modal.vue'
-import TextInput from '@/components/TextInput.vue'
-import StudentQuizGrades from '@/components/StudentQuizGrades.vue'
-import TabView from 'primevue/tabview'
-import TabPanel from 'primevue/tabpanel'
-
-const activeTabIndex = ref(0)
+import TabList from '@/components/TabList.vue'
 
 const router = useRouter()
 const route = useRoute()
-const { students, loading, error, deleteStudent, updateStudent } = useStudents()
+const { students, loading, error, deleteStudent } = useStudents()
 const { updateTitle } = usePageTitle()
 
 const showDeleteModal = ref(false)
 const studentId = route.params.studentId as string
-const student = computed(() => students.value.find(s => s.id === studentId))
-
-const editedName = ref(student.value?.name || '')
-const editedNotes = ref(student.value?.notes || '')
-
-const debouncedNotes = useDebounce(editedNotes, 500)
-
-// Watch for student changes to update local values and title
-watch(() => student.value?.name, (newName) => {
-  if (newName !== editedName.value) {
-    editedName.value = newName || ''
-    updateTitle(newName)
-  }
+const student = computed(() => {
+  const s = students.value.find(s => s.id === studentId)
+  if (s?.name) updateTitle(s.name)
+  return s
 })
 
-watch(() => student.value?.notes, (newNotes) => {
-  if (newNotes !== editedNotes.value) {
-    editedNotes.value = newNotes || ''
-  }
-})
+const tabs = [
+  { label: 'Details', value: 'student-details' },
+  { label: 'Quiz Grades', value: 'student-grades' }
+]
 
-// Watch for debounced changes to update server
-watch(debouncedNotes, async (newNotes) => {
-  if (student.value && newNotes !== student.value.notes) {
-    await updateStudent(student.value.id, {
-      notes: newNotes
-    })
-  }
-})
-
-watch(editedName, async (newName) => {
-  if (student.value && newName !== student.value.name) {
-    await updateStudent(student.value.id, {
-      name: newName
+const currentTab = computed({
+  get() {
+    return route.name as string
+  },
+  set(value: string) {
+    router.push({
+      name: value,
+      params: { studentId }
     })
   }
 })
@@ -66,11 +45,17 @@ const handleDelete = async () => {
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div>
     <SubHeader 
       :title="student?.name || ''"
       super-title="Student"
     >
+      <template #tabs>
+        <TabList
+          v-model="currentTab"
+          :tabs="tabs"
+        />
+      </template>
       <template #action>
         <button
           @click="showDeleteModal = true"
@@ -93,7 +78,7 @@ const handleDelete = async () => {
       </template>
     </SubHeader>
 
-    <div class="max-w-7xl mx-auto px-6 sm:px-8 py-6">
+    <div class="max-w-7xl mx-auto">
       <!-- Error message -->
       <div v-if="error" class="text-red-600 mb-4">
         {{ error }}
@@ -105,41 +90,24 @@ const handleDelete = async () => {
       <!-- Student not found -->
       <div v-else-if="!student" class="text-gray-600">Student not found.</div>
 
-      <!-- Student details -->
-      <div v-else class="bg-white rounded-lg shadow p-6">
-        <TabView v-model:activeIndex="activeTabIndex">
-          <TabPanel header="Details" :pt="{ root: { class: 'p-4' } }">
-            <TextInput
-              v-model="editedName"
-              label="Name"
-              class="mb-4"
-            />
-            <TextInput
-              v-model="editedNotes"
-              label="Notes"
-              type="textarea"
-              :rows="4"
-            />
-          </TabPanel>
-          <TabPanel header="Quiz Grades" :pt="{ root: { class: 'p-4' } }">
-            <StudentQuizGrades :student-id="studentId" />
-          </TabPanel>
-        </TabView>
+      <!-- Student content -->
+      <div v-else>
+        <router-view />
       </div>
 
-    <!-- Delete Confirmation Modal -->
-    <Modal
-      v-model="showDeleteModal"
-      title="Delete Student"
-      :actions="[
-        { label: 'Cancel', onClick: () => showDeleteModal = false },
-        { label: 'Delete', onClick: handleDelete, variant: 'danger' }
-      ]"
-    >
-      <p class="text-gray-700">
-        Are you sure you want to delete this student? This action cannot be undone.
-      </p>
-    </Modal>
+      <!-- Delete Confirmation Modal -->
+      <Modal
+        v-model="showDeleteModal"
+        title="Delete Student"
+        :actions="[
+          { label: 'Cancel', onClick: () => showDeleteModal = false },
+          { label: 'Delete', onClick: handleDelete, variant: 'danger' }
+        ]"
+      >
+        <p class="text-gray-700">
+          Are you sure you want to delete this student? This action cannot be undone.
+        </p>
+      </Modal>
     </div>
   </div>
 </template>

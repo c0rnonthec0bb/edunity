@@ -1,5 +1,5 @@
 <template>
-  <div class="flex items-center justify-between bg-white rounded-lg shadow hover:shadow-md transition-shadow px-4 py-2 hover:bg-gray-100">
+  <div class="flex items-center justify-between bg-white rounded-lg shadow hover:shadow-md transition-shadow px-4 py-3 hover:bg-gray-100">
     <div class="min-w-0 flex-1">
       <div v-if="student" class="text-m font-medium text-gray-900">
         {{ student.name }}

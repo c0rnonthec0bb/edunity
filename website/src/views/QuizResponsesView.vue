@@ -43,7 +43,7 @@ const getStudentForResponse = (response: {
 </script>
 
 <template>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Error message -->
     <div v-if="responsesError" class="text-red-600 mb-4">
       {{ responsesError }}
@@ -52,7 +52,7 @@ const getStudentForResponse = (response: {
     <!-- Upload button -->
     <button
       @click="showCameraModal = true"
-      class="w-full inline-flex items-center justify-center px-4 py-2.5 bg-theme-500 text-white rounded-lg hover:bg-theme-600 transition-colors gap-2 mb-6 h-10"
+      class="w-full inline-flex items-center justify-center px-4 py-2.5 bg-theme-500 text-white rounded-lg hover:bg-theme-600 transition-colors gap-2 mb-3 h-10"
     >
       <svg
         class="w-5 h-5"
@@ -110,7 +110,7 @@ const getStudentForResponse = (response: {
     <!-- Uploading banner -->
     <div 
       v-if="uploadingCount > 0"
-      class="flex items-center gap-3 bg-theme-50 text-theme-700 px-4 py-3 rounded-lg mb-6"
+      class="flex items-center gap-3 bg-theme-50 text-theme-700 px-4 py-3 rounded-lg mb-3"
     >
       <svg class="w-5 h-5 animate-spin" viewBox="0 0 24 24">
         <circle

@@ -99,64 +99,66 @@ const upload = async () => {
 </script>
 
 <template>
-  <div class="space-y-6">
-    <div class="card">
-      <Toast />
-      <div class="flex gap-2 justify-center">
-        <div class="flex-1">
-          <FileUpload 
-            ref="fileupload" 
-            mode="basic" 
-            name="file" 
-            url="/api/upload" 
-            accept="application/pdf" 
-            :maxFileSize="5000000" 
-            @upload="upload"
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+    <div class="space-y-6">
+      <div class="card" style="display: none;">
+        <Toast />
+        <div class="flex gap-2 justify-center">
+          <div class="flex-1">
+            <FileUpload 
+              ref="fileupload" 
+              mode="basic" 
+              name="file" 
+              url="/api/upload" 
+              accept="application/pdf" 
+              :maxFileSize="5000000" 
+              @upload="upload"
+              class="w-full"
+            />
+          </div>
+          <Button label="Upload" @click="upload" severity="secondary" class="flex-1" />
+        </div>
+      </div>
+
+      <!-- Display Extracted Text -->
+      <div v-if="uploadedText" class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Extracted Text</h3>
+        <p class="text-gray-600 whitespace-pre-wrap">{{ uploadedText }}</p>
+        
+        <div class="mt-4">
+          <Button 
+            label="Generate Questions" 
+            @click="generateQuestions" 
+            :loading="isGenerating"
+            :disabled="isGenerating"
+            severity="primary" 
             class="w-full"
           />
         </div>
-        <Button label="Upload" @click="upload" severity="secondary" class="flex-1" />
       </div>
-    </div>
 
-    <!-- Display Extracted Text -->
-    <div v-if="uploadedText" class="bg-white rounded-lg shadow p-6">
-      <h3 class="text-lg font-medium text-gray-900 mb-2">Extracted Text</h3>
-      <p class="text-gray-600 whitespace-pre-wrap">{{ uploadedText }}</p>
-      
-      <div class="mt-4">
-        <Button 
-          label="Generate Questions" 
-          @click="generateQuestions" 
-          :loading="isGenerating"
-          :disabled="isGenerating"
-          severity="primary" 
-          class="w-full"
-        />
+      <!-- Display AI-Generated Questions -->
+      <div v-if="generatedQuestions.length" class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Generated Questions</h3>
+        <ul class="space-y-4">
+          <li 
+            v-for="(question, index) in generatedQuestions" 
+            :key="index" 
+            class="border rounded-lg p-4 bg-gray-50"
+          >
+            <div class="font-medium">Question {{ index + 1 }}:</div>
+            <div class="mt-1">{{ question.question }}</div>
+            <div class="mt-2 text-sm text-gray-600">
+              <span class="font-medium">Answer:</span> {{ question.answer }}
+            </div>
+            <div class="mt-1 text-sm text-gray-500">
+              <span class="font-medium">Points:</span> {{ question.points }}
+            </div>
+          </li>
+        </ul>
       </div>
-    </div>
 
-    <!-- Display AI-Generated Questions -->
-    <div v-if="generatedQuestions.length" class="bg-white rounded-lg shadow p-6">
-      <h3 class="text-lg font-medium text-gray-900 mb-2">Generated Questions</h3>
-      <ul class="space-y-4">
-        <li 
-          v-for="(question, index) in generatedQuestions" 
-          :key="index" 
-          class="border rounded-lg p-4 bg-gray-50"
-        >
-          <div class="font-medium">Question {{ index + 1 }}:</div>
-          <div class="mt-1">{{ question.question }}</div>
-          <div class="mt-2 text-sm text-gray-600">
-            <span class="font-medium">Answer:</span> {{ question.answer }}
-          </div>
-          <div class="mt-1 text-sm text-gray-500">
-            <span class="font-medium">Points:</span> {{ question.points }}
-          </div>
-        </li>
-      </ul>
+      <QuizSetup :quiz-id="route.params.quizId" />
     </div>
-
-    <QuizSetup :quiz-id="route.params.quizId" />
   </div>
 </template>

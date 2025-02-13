@@ -28,21 +28,23 @@ watch(debouncedName, async (newName) => {
 </script>
 
 <template>
-  <div class="space-y-6">
-    <div class="bg-white rounded-lg shadow">
-      <div class="p-6">
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Quiz Name</label>
-          <TextInput
-            v-model="quizName"
-            placeholder="Enter quiz name"
-          />
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="space-y-6">
+      <div class="bg-white rounded-lg shadow">
+        <div class="p-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Quiz Name</label>
+            <TextInput
+              v-model="quizName"
+              placeholder="Enter quiz name"
+            />
+          </div>
         </div>
       </div>
+      <QuizSummarySection
+        v-if="quiz"
+        :quiz="quiz"
+      />
     </div>
-    <QuizSummarySection
-      v-if="quiz"
-      :quiz="quiz"
-    />
   </div>
 </template>

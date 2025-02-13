@@ -23,6 +23,10 @@ export interface QuizResponse {
   createdAt: any
   updatedAt: any
   isLocal?: boolean
+  autoGradeResults?: {
+    totalPointsEarned: number
+    totalPossiblePoints: number
+  }
 }
 
 interface UseQuizResponsesOptions {
@@ -137,7 +141,8 @@ export function useQuizResponses(options: UseQuizResponsesOptions = {}) {
                   maxScore: maxScore,
                   createdAt: data.createdAt,
                   responses: data.responses,
-                  photoCapturePath: data.photoCapturePath
+                  photoCapturePath: data.photoCapturePath,
+                  autoGradeResults: data.autoGradeResults
                 } as QuizResponse
               })
               // Filter out null responses (ungraded ones)
@@ -236,7 +241,7 @@ export function useQuizResponses(options: UseQuizResponsesOptions = {}) {
   const updateQuizResponse = async (
     quizId: string,
     responseId: string,
-    data: { responses?: QuestionResponse[]; score?: number }
+    data: { responses?: QuestionResponse[]; score?: number; autoGradeResults?: { totalPointsEarned: number; totalPossiblePoints: number } }
   ) => {
     if (!user.value) return
 
