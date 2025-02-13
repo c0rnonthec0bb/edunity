@@ -36,8 +36,9 @@ onUnmounted(() => {
     <div class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
       <div class="flex items-center justify-between h-16">
         <!-- Logo -->
-        <router-link :to="{ name: 'home' }" class="text-xl font-bold text-white transition-colors">
-          Edunity.ai
+        <router-link :to="{ name: 'home' }" class="text-xl font-bold text-white transition-colors flex items-center gap-2">
+          <img src="/images/logo-white.svg" alt="Homeroom Hero Logo" class="h-6 w-6" />
+          Homeroom Hero
         </router-link>
 
         <!-- Account Menu -->

@@ -1,8 +1,11 @@
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-100">
     <div class="text-center">
+      <div class="flex items-center justify-center mb-4">
+        <img src="/images/logo.svg" alt="Homeroom Hero Logo" class="h-16 w-16" />
+      </div>
       <h1 class="text-4xl font-bold text-theme-600 mb-8">
-        Edunity.ai
+        Homeroom Hero
       </h1>
       <button
         @click="signInWithGoogle"
@@ -22,4 +25,7 @@
 
 <script setup lang="ts">
 import { signInWithGoogle } from '@/firebase'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 </script>
