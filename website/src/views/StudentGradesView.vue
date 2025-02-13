@@ -15,7 +15,6 @@ const { responses, loading: responsesLoading } = useQuizResponses({
 // Get quiz info for each response
 const responsesWithQuiz = computed(() => {
   return responses.value
-    .filter(r => r.autoGradeResults) // Only show graded responses
     .map(response => {
       const quiz = quizzes.value.find(q => q.id === response.quizId)
       return {

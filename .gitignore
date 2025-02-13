@@ -1,6 +1,7 @@
 node_modules
 
 firebase-debug.log
+.firebase/
 
 # macOS system files
 .DS_Store

@@ -20,6 +20,7 @@ export interface QuizResponse {
   responses?: QuestionResponse[]
   photoCapturePath?: string
   score?: number
+  maxScore?: number
   createdAt: any
   updatedAt: any
   isLocal?: boolean
@@ -87,11 +88,6 @@ export function useQuizResponses(options: UseQuizResponsesOptions = {}) {
             })) as QuizResponse[]
             loading.value = false
           },
-          err => {
-            console.error('Error watching responses:', err)
-            error.value = err
-            loading.value = false
-          }
         )
       } else if (currentStudentId) {
         // If we only have studentId, use collection group query to get responses across all quizzes
@@ -116,14 +112,8 @@ export function useQuizResponses(options: UseQuizResponsesOptions = {}) {
                 const data = doc.data()
                 console.log('Raw doc data:', data)
                 
-                // Check if response has been graded by looking at autoGradeResults
-                if (!data.autoGradeResults || typeof data.autoGradeResults.totalPointsEarned !== 'number') {
-                  console.log('Skipping ungraded response:', doc.id)
-                  return null
-                }
-                
-                const score = data.autoGradeResults.totalPointsEarned
-                const maxScore = data.autoGradeResults.totalPossiblePoints
+                const score = data.autoGradeResults?.totalPointsEarned
+                const maxScore = data.autoGradeResults?.totalPossiblePoints
                 
                 console.log('Found graded response:', {
                   id: doc.id,
