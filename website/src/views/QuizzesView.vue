@@ -28,7 +28,7 @@ const handleCreateQuiz = async () => {
       <template #action>
         <button
           @click="showCreateModal = true"
-          class="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors rounded-full hover:bg-gray-100"
+          class="w-8 h-8 flex items-center justify-center text-theme-500 hover:text-theme-600 transition-colors rounded-full hover:bg-theme-50"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -80,7 +80,12 @@ const handleCreateQuiz = async () => {
       title="Create New Quiz"
       :actions="[
         { label: 'Cancel', onClick: () => showCreateModal = false },
-        { label: 'Create Quiz', onClick: handleCreateQuiz }
+        {
+          label: 'Create Quiz',
+          onClick: handleCreateQuiz,
+          isPrimary: true,
+          disabled: !newQuizName
+        }
       ]"
     >
       <div class="space-y-4">

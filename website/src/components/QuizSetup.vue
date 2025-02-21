@@ -284,7 +284,9 @@ const saveEdit = async () => {
           <Button
             label="Delete"
             severity="danger"
-            @click="removeQuestion"
+            :disabled="!deletingQuestion"
+            class="p-button-sm"
+            isDanger
           />
         </div>
       </template>

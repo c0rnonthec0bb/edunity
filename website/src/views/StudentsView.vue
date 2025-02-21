@@ -49,7 +49,7 @@ defineExpose({
       <template #action>
         <button
           @click="showAddModal = true"
-          class="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors rounded-full hover:bg-gray-100"
+          class="w-8 h-8 flex items-center justify-center text-theme-500 hover:text-theme-600 transition-colors rounded-full hover:bg-theme-50"
         >
           <svg
             class="w-5 h-5"
@@ -105,7 +105,12 @@ defineExpose({
         title="Add New Student"
         :actions="[
           { label: 'Cancel', onClick: () => showAddModal = false },
-          { label: 'Add Student', onClick: handleAddStudent }
+          {
+            label: 'Add Student',
+            onClick: handleAddStudent,
+            isPrimary: true,
+            disabled: !newStudentName.trim()
+          }
         ]"
       >
         <div class="space-y-4">

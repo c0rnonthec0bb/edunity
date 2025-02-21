@@ -66,7 +66,7 @@
       title="Delete Response"
       :actions="[
         { label: 'Cancel', onClick: () => confirmDelete = false },
-        { label: 'Delete', onClick: handleDelete, variant: 'danger' }
+        { label: 'Delete', onClick: handleDelete, isDanger: true }
       ]"
     >
       <p class="text-gray-700">

@@ -86,25 +86,14 @@ const getStudentForResponse = (response: {
     <Modal
       v-if="showDeleteModal"
       title="Delete Response"
-      @close="showDeleteModal = false"
+      :actions="[
+        { label: 'Cancel', onClick: () => showDeleteModal = false },
+        { label: 'Delete', onClick: handleDelete, isDanger: true }
+      ]"
     >
       <p class="text-gray-700 mb-4">
         Are you sure you want to delete this response?
       </p>
-      <div class="flex justify-end space-x-2">
-        <button
-          @click="showDeleteModal = false"
-          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          Cancel
-        </button>
-        <button
-          @click="handleDelete"
-          class="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-        >
-          Delete
-        </button>
-      </div>
     </Modal>
 
     <!-- Uploading banner -->

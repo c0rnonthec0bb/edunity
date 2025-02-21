@@ -73,13 +73,15 @@
                         v-for="action in actions"
                         :key="action.label"
                         @click="action.onClick"
+                        :disabled="action.disabled"
                         :class="[
-                          'px-4 py-2 text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2',
-                          action.variant === 'danger'
-                            ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500 border-transparent text-white'
-                            : action.variant === 'primary'
-                              ? 'bg-theme-500 hover:bg-theme-600 focus:ring-theme-500 border-transparent text-white'
-                              : 'bg-white hover:bg-gray-100 focus:ring-theme-500 border border-gray-300 text-gray-700'
+                          'px-4 py-2 rounded-lg font-medium transition-colors',
+                          action.isDanger
+                            ? 'bg-red-600 hover:bg-red-700 text-white'
+                            : action.isPrimary
+                              ? 'inline-flex items-center justify-center px-4 py-2.5 bg-theme-500 text-white rounded-lg hover:bg-theme-600 transition-colors gap-2 h-10'
+                              : 'bg-white hover:bg-gray-100 text-gray-700 border border-gray-300',
+                          action.disabled && 'opacity-50 cursor-not-allowed'
                         ]"
                       >
                         {{ action.label }}
@@ -102,7 +104,9 @@ import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } fro
 interface ModalAction {
   label: string
   onClick: () => void
-  variant?: 'primary' | 'danger' | 'default'
+  isPrimary?: boolean
+  isDanger?: boolean
+  disabled?: boolean
 }
 
 const props = withDefaults(defineProps<{

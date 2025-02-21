@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { onMounted, onBeforeMount } from 'vue'
+import { useAuth } from '@/composables/useAuth'
 
 const router = useRouter()
+const { user } = useAuth()
 
 onBeforeMount(() => {
   console.log('HomeView before mount')
@@ -28,7 +30,7 @@ const menuItems = [
 
 <template>
   <div class="px-6 sm:px-8 py-6">
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Welcome to Homeroom Hero</h1>
+    <h1 class="text-2xl font-bold text-gray-600 mb-6">Welcome, {{ user?.displayName || 'Teacher' }}</h1>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       <div
         v-for="item in menuItems"

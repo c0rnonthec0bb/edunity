@@ -1,10 +1,10 @@
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-100">
     <div class="text-center">
-      <div class="flex items-center justify-center mb-4">
-        <img src="/images/logo.svg" alt="Homeroom Hero Logo" class="h-16 w-16" />
+      <div class="flex items-center justify-center mb-6">
+        <Logo class="h-12 w-auto" :onLight="true" />
       </div>
-      <h1 class="text-4xl font-bold text-theme-600 mb-8">
+      <h1 class="text-3xl font-bold text-gray-600 mb-8">
         Homeroom Hero
       </h1>
       <button
@@ -26,6 +26,7 @@
 <script setup lang="ts">
 import { signInWithGoogle } from '@/firebase'
 import { useRouter } from 'vue-router'
+import Logo from '@/components/Logo.vue'
 
 const router = useRouter()
 </script>

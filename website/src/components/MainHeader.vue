@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 import { useRouter } from 'vue-router'
+import Logo from '@/components/Logo.vue'
 
 const router = useRouter()
 const { user, signOut } = useAuth()
@@ -32,13 +33,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <header class="sticky top-0 z-50 bg-theme-500">
+  <header class="sticky top-0 z-50 bg-black">
     <div class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
       <div class="flex items-center justify-between h-16">
         <!-- Logo -->
         <router-link :to="{ name: 'home' }" class="text-xl font-bold text-white transition-colors flex items-center gap-2">
-          <img src="/images/logo-white.svg" alt="Homeroom Hero Logo" class="h-6 w-6" />
-          Homeroom Hero
+          <Logo class="h-6 w-auto" />
         </router-link>
 
         <!-- Account Menu -->
@@ -48,7 +48,7 @@ onUnmounted(() => {
             @click="showMenu = !showMenu"
             class="flex items-center justify-center w-8 h-8 bg-white rounded-full"
           >
-            <svg class="w-5 h-5 text-theme-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
