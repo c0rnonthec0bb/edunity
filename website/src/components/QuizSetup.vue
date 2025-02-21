@@ -5,7 +5,6 @@ import { nanoid } from 'nanoid'
 import draggable from 'vuedraggable'
 import Modal from './Modal.vue'
 import TextInput from './TextInput.vue'
-import Button from 'primevue/button'
 
 const props = defineProps<{
   quizId: string
@@ -168,6 +167,18 @@ const saveEdit = async () => {
     <Modal
       v-model="showAddModal"
       title="Add Question"
+      :actions="[
+        {
+          label: 'Cancel',
+          onClick: () => showAddModal = false
+        },
+        {
+          label: 'Add Question',
+          onClick: addQuestion,
+          isPrimary: true,
+          disabled: !newQuestion.question || !newQuestion.answer
+        }
+      ]"
     >
       <div class="space-y-4">
         <div>
@@ -197,28 +208,27 @@ const saveEdit = async () => {
           />
         </div>
       </div>
-
-      <template #footer>
-        <div class="flex justify-end gap-3">
-          <Button
-            label="Cancel"
-            severity="secondary"
-            text
-            @click="showAddModal = false"
-          />
-          <Button
-            label="Add Question"
-            class="bg-theme-500 hover:bg-theme-600 border-theme-500 hover:border-theme-600"
-            @click="addQuestion"
-          />
-        </div>
-      </template>
     </Modal>
 
     <!-- Edit Question Modal -->
     <Modal
       v-model="showEditModal"
       title="Edit Question"
+      :actions="[
+        {
+          label: 'Cancel',
+          onClick: () => {
+            showEditModal = false
+            editingQuestion.value = null
+          }
+        },
+        {
+          label: 'Save Changes',
+          onClick: saveEdit,
+          isPrimary: true,
+          disabled: !editedQuestion.question || !editedQuestion.answer
+        }
+      ]"
     >
       <div class="space-y-4">
         <div>
@@ -248,48 +258,28 @@ const saveEdit = async () => {
           />
         </div>
       </div>
-
-      <template #footer>
-        <div class="flex justify-end gap-3">
-          <Button
-            label="Cancel"
-            severity="secondary"
-            text
-            @click="showEditModal = false"
-          />
-          <Button
-            label="Save Changes"
-            class="bg-theme-500 hover:bg-theme-600 border-theme-500 hover:border-theme-600"
-            @click="saveEdit"
-          />
-        </div>
-      </template>
     </Modal>
 
-    <!-- Delete Confirmation Modal -->
+    <!-- Delete Question Modal -->
     <Modal
       v-model="showDeleteModal"
       title="Delete Question"
+      :actions="[
+        {
+          label: 'Cancel',
+          onClick: () => {
+            showDeleteModal = false
+            deletingQuestion.value = null
+          }
+        },
+        {
+          label: 'Delete',
+          onClick: removeQuestion,
+          isDanger: true
+        }
+      ]"
     >
-      <p class="text-gray-700">Are you sure you want to delete this question? This action cannot be undone.</p>
-
-      <template #footer>
-        <div class="flex justify-end gap-3">
-          <Button
-            label="Cancel"
-            severity="secondary"
-            text
-            @click="showDeleteModal = false"
-          />
-          <Button
-            label="Delete"
-            severity="danger"
-            :disabled="!deletingQuestion"
-            class="p-button-sm"
-            isDanger
-          />
-        </div>
-      </template>
+      <p class="text-gray-600">Are you sure you want to delete this question? This action cannot be undone.</p>
     </Modal>
   </div>
 </template>
